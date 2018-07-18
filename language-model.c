@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,21 +49,18 @@ int langM_insertWord(LanguageModel *langM, char *c)
 {
 	Node *cursor = langM->head;
 	char *c0 = c;
-	int err = 0;
 
-	for (; !err && *c != '\0'; c++) {
+	for (; *c != '\0'; c++) {
 		/* Generate index */
 		Alphabet i = charToAlphabet(*c);
-		if (i >= AlphabetSize) {
-			err = 1;
+		if (i >= AlphabetSize)
 			break;
-		}
 
 		/* Get next node. Malloc if null */
 		Node **next = &cursor->next[i];
 		if (!*next) {
 			if (!(*next = (Node*)malloc(sizeof(Node)))) {
-				err = 1;
+				errno = ENOMEM;
 				break;
 			}
 			langM_initNode(*next);
@@ -75,21 +73,17 @@ int langM_insertWord(LanguageModel *langM, char *c)
 	int depth = c - c0;
 	if (depth)
 		langM->head->freq++;
-
-	return err;
+	return depth;
 }
 
 int langM_deserialize(LanguageModel *langM, FILE *f)
 {
 	return langM_deserializeNode(langM->head, f);
-
-	return 1;
 }
 
 int langM_deserializeNode(Node *n, FILE *f)
 {
 	char c;
-	int err = 0;
 	int freq;
 
 	if (fscanf(f, "%d", &freq) != 1)
@@ -102,24 +96,23 @@ int langM_deserializeNode(Node *n, FILE *f)
 	while ((c = getc(f)) != ')') {
 		/* Generate index */
 		Alphabet i = charToAlphabet(c);
-		if (i >= AlphabetSize) {
-			err = 1;
-			break;
-		}
+		if (i >= AlphabetSize)
+			return 1;
 
 		/* Get next node. Malloc if null */
 		Node **next = &n->next[i];
 		if (!*next) {
 			if (!(*next = (Node*)malloc(sizeof(Node)))) {
-				err = 1;
-				break;
+				errno = ENOMEM;
+				return 1;
 			}
 			langM_initNode(*next);
 		}
 
-		langM_deserializeNode(*next, f);
+		if (langM_deserializeNode(*next, f))
+			return 1;
 	}
-	return err;
+	return 0;
 }
 int langM_serialize(LanguageModel *langM, FILE *f)
 {
@@ -129,13 +122,15 @@ int langM_serialize(LanguageModel *langM, FILE *f)
 /* n must not be null */
 int langM_serializeNode(Node *n, FILE *f)
 {
-	fprintf(f ,"%d(", n->freq);
+	if (fprintf(f ,"%d(", n->freq) < 0)
+		return 1;
 
 	for (int i = 0; i < AlphabetSize; i++)
 	{
 		Node *next = n->next[i];
 		if (next) {
-			fprintf(f ,"%c", alphabetToChar((Alphabet)i));
+			if (fprintf(f ,"%c", alphabetToChar((Alphabet)i)) < 0)
+				return 1;
 			langM_serializeNode(next, f);
 		}
 	}
@@ -215,7 +210,7 @@ int langM_insertFile(LanguageModel *langM, int depth, FILE * in)
 	if (i > 0) {
 		memcpy(word, buff, i);
 		word[i] = '\0';
-		if (langM_insertWord(langM, word))
+		if (langM_insertWord(langM, word) != depth)
 			return 1;
 	}
 
@@ -228,7 +223,7 @@ int langM_insertFile(LanguageModel *langM, int depth, FILE * in)
 		buff[i] = c;
 		for (int j = 0; j < depth; j++)
 			word[j] = buff[(i + j + 1) % depth];
-		if (langM_insertWord(langM, word))
+		if (langM_insertWord(langM, word) != depth)
 			return 1;
 		i = (i + 1) % depth;
 	}
