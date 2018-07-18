@@ -46,7 +46,6 @@ struct Node {
 
 typedef struct {
 	Node *head;
-	int depth;
 } LanguageModel;
 
 int langM_init(LanguageModel *langM);

@@ -5,8 +5,6 @@
 
 #include "language-model.h"
 
-#define langM_maxDepth 256
-
 void langM_initNode(Node *node);
 void langM_freeNode(Node *n);
 int langM_serializeNode(Node *n, FILE *f);
@@ -75,9 +73,6 @@ int langM_insertWord(LanguageModel *langM, char *c)
 	}
 
 	int depth = c - c0;
-	if (langM->depth < depth)
-		langM->depth = depth;
-
 	if (depth)
 		langM->head->freq++;
 
@@ -86,13 +81,6 @@ int langM_insertWord(LanguageModel *langM, char *c)
 
 int langM_deserialize(LanguageModel *langM, FILE *f)
 {
-	int depth;
-	if (fscanf(f, "%d", &depth) != 1)
-		return 1;
-
-	if (langM->depth < depth)
-		langM->depth = depth;
-
 	return langM_deserializeNode(langM->head, f);
 
 	return 1;
@@ -135,7 +123,6 @@ int langM_deserializeNode(Node *n, FILE *f)
 }
 int langM_serialize(LanguageModel *langM, FILE *f)
 {
-	fprintf(f, "%d\n", langM->depth);
 	return langM_serializeNode(langM->head, f);
 }
 
