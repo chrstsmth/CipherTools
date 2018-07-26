@@ -51,7 +51,6 @@ typedef struct {
 int langM_init(LanguageModel *langM);
 void langM_free(LanguageModel *langM);
 int langM_insertWord(LanguageModel *langM, char *c);
-int langM_insertFile(LanguageModel *langM, int depth, FILE * in);
 int langM_deserialize(LanguageModel *langM, FILE *f);
 int langM_serialize(LanguageModel *langM, FILE *f);
 Alphabet charToAlphabet(char c);
