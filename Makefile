@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -std=c99 -g -Wall -I.
 TARGET = language-model
 MODELER = language-modeler
-DEPS = language-model.h
-OBJ = language-model.o
+DEPS = language-model.h alphabet.h
+OBJ = language-model.o alphabet.o
 
 $(MODELER): $(MODELER).c $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)

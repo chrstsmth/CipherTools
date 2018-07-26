@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "alphabet.h"
 #include "language-model.h"
 
 #include "arg.h"
