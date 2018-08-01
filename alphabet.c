@@ -62,3 +62,19 @@ char alphabetToChar(Alphabet a)
 	}
 	return c;
 }
+
+void stringToAlphabet(char *c, Alphabet *a)
+{
+	for (; *c != '\0'; a++, c++) {
+		*a = charToAlphabet(*c);
+	}
+	*a = AlphabetNull;
+}
+
+void alphabetToString(Alphabet *a, char *c)
+{
+	for (; *a != AlphabetNull; a++, c++) {
+		*c = alphabetToChar(*a);
+	}
+	*c = '\0';
+}

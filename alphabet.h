@@ -39,5 +39,7 @@ Alphabet alphabet_add(Alphabet a, Alphabet b);
 Alphabet alphabet_subtract(Alphabet a, Alphabet b);
 Alphabet charToAlphabet(char c);
 char alphabetToChar(Alphabet a);
+void stringToAlphabet(char *c, Alphabet *a);
+void alphabetToString(Alphabet *a, char *c);
 
 #endif /* ALPHABET_H */
