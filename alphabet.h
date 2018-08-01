@@ -35,6 +35,8 @@ typedef enum {
 	AlphabetNull
 } Alphabet;
 
+Alphabet alphabet_add(Alphabet a, Alphabet b);
+Alphabet alphabet_subtract(Alphabet a, Alphabet b);
 Alphabet charToAlphabet(char c);
 char alphabetToChar(Alphabet a);
 

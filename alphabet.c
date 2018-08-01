@@ -1,5 +1,15 @@
 #include "alphabet.h"
 
+Alphabet alphabet_add(Alphabet a, Alphabet b)
+{
+	return (a + b) % AlphabetSize;
+}
+
+Alphabet alphabet_subtract(Alphabet a, Alphabet b)
+{
+	return (a - b + AlphabetSize) % AlphabetSize;
+}
+
 Alphabet charToAlphabet(char c)
 {
 	Alphabet a;
