@@ -36,7 +36,7 @@ void langM_freeNode(Node *node)
 	if (!node)
 		return;
 
-	for (int i = 0; i < AlphabetSize; i++)
+	for (int i = 0; i < (int)AlphabetSubsetLangM; i++)
 	{
 		Node *next = node->next[i];
 		if (next)
@@ -54,7 +54,7 @@ int langM_insertWord(LanguageModel *langM, char *c)
 	for (; *c != '\0'; c++) {
 		/* Generate index */
 		Alphabet i = charToAlphabet(*c);
-		if (i >= AlphabetSize)
+		if(!isAlphabetSubsetLangM(i))
 			break;
 
 		/* Get next node. Malloc if null */
@@ -97,7 +97,7 @@ int langM_deserializeNode(Node *n, FILE *f)
 	while ((c = getc(f)) != ')') {
 		/* Generate index */
 		Alphabet i = charToAlphabet(c);
-		if (i >= AlphabetSize)
+		if(!isAlphabetSubsetLangM(i))
 			return 1;
 
 		/* Get next node. Malloc if null */
@@ -120,13 +120,12 @@ int langM_serialize(LanguageModel *langM, FILE *f)
 	return langM_serializeNode(langM->head, f);
 }
 
-/* n must not be null */
 int langM_serializeNode(Node *n, FILE *f)
 {
 	if (fprintf(f ,"%d(", n->freq) < 0)
 		return 1;
 
-	for (int i = 0; i < AlphabetSize; i++)
+	for (int i = 0; i < (int)AlphabetSubsetLangM; i++)
 	{
 		Node *next = n->next[i];
 		if (next) {

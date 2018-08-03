@@ -1,13 +1,49 @@
+#include <stdbool.h>
+
 #include "alphabet.h"
 
 Alphabet alphabet_add(Alphabet a, Alphabet b)
 {
-	return (a + b) % AlphabetSize;
+	Alphabet add = a;
+	if (isAlphabetSubsetCipher(a))
+		add = (a + b) % AlphabetSubsetCipher;
+	return add;
 }
 
 Alphabet alphabet_subtract(Alphabet a, Alphabet b)
 {
-	return (a - b + AlphabetSize) % AlphabetSize;
+	Alphabet add = a;
+	if (isAlphabetSubsetCipher(a))
+		add = (a - b + AlphabetSubsetCipher) % AlphabetSubsetCipher;
+	return add;
+}
+
+AlphabetSubset getAlphabetSubset(Alphabet a)
+{
+	AlphabetSubset s;
+	if (isAlphabetSubsetCipher(a)) {
+		s = AlphabetSubsetCipher;
+	} else if (isAlphabetSubsetLangM(a)) {
+		s = AlphabetSubsetLangM;
+	} else {
+		s = AlphabetSuperset;
+	}
+	return s;
+}
+
+bool isAlphabetSubsetCipher(Alphabet a)
+{
+	return (a < (int)AlphabetSubsetCipher);
+}
+
+bool isAlphabetSubsetLangM(Alphabet a)
+{
+	return (a < (int)AlphabetSubsetLangM);
+}
+
+bool isAlphabetSubsetAll(Alphabet a)
+{
+	return (a < (int)AlphabetSuperset);
 }
 
 Alphabet charToAlphabet(char c)
@@ -53,7 +89,6 @@ char alphabetToChar(Alphabet a)
 			case AlphabetNull:
 				c = '\0';
 				break;
-			case AlphabetSize:
 			case AlphabetUnknown: /* Fall through */
 			default: /* Fall through */
 				c = '?';
@@ -63,12 +98,15 @@ char alphabetToChar(Alphabet a)
 	return c;
 }
 
-void stringToAlphabet(char *c, Alphabet *a)
+Alphabet stringToAlphabet(char *c, Alphabet *a)
 {
+	Alphabet max = 0;
 	for (; *c != '\0'; a++, c++) {
 		*a = charToAlphabet(*c);
+		max = (*a > max) ? *a : max;
 	}
 	*a = AlphabetNull;
+	return getAlphabetSubset(max);
 }
 
 void alphabetToString(Alphabet *a, char *c)

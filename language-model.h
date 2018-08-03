@@ -8,7 +8,7 @@
 typedef struct Node Node;
 
 struct Node {
-	Node *next[AlphabetSize];
+	Node *next[AlphabetSubsetLangM];
 	int freq;
 };
 

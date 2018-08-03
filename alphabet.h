@@ -1,6 +1,8 @@
 #ifndef ALPHABET_H
 #define ALPHABET_H
 
+#include <stdbool.h>
+
 typedef enum {
 	AlphabetA,
 	AlphabetB,
@@ -30,16 +32,25 @@ typedef enum {
 	AlphabetZ,
 	AlphabetSpace,
 	AlphabetPeriod,
-	AlphabetSize,
 	AlphabetUnknown,
-	AlphabetNull
+	AlphabetNull,
 } Alphabet;
+
+typedef enum {
+	AlphabetSubsetCipher = (AlphabetZ + 1),
+	AlphabetSubsetLangM  = (AlphabetPeriod + 1),
+	AlphabetSuperset     = (AlphabetUnknown + 1),
+} AlphabetSubset;
 
 Alphabet alphabet_add(Alphabet a, Alphabet b);
 Alphabet alphabet_subtract(Alphabet a, Alphabet b);
 Alphabet charToAlphabet(char c);
 char alphabetToChar(Alphabet a);
-void stringToAlphabet(char *c, Alphabet *a);
+Alphabet stringToAlphabet(char *c, Alphabet *a);
 void alphabetToString(Alphabet *a, char *c);
+bool isAlphabetSubsetCipher(Alphabet a);
+bool isAlphabetSubsetLangM(Alphabet a);
+bool isAlphabetSubsetAll(Alphabet a);
+AlphabetSubset getAlphabetSubset(Alphabet a);
 
 #endif /* ALPHABET_H */

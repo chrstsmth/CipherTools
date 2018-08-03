@@ -24,9 +24,11 @@ int caesar_keySize(char *argv)
 
 int caesar_parseKey(char *argv, void *key)
 {
+	if (strlen(argv) != 1)
+		return 1;
 	Alphabet *k = (Alphabet*)key;
 	*k = charToAlphabet(*argv);
-	return 0; /* TODO */
+	return (isAlphabetSubsetCipher(*k)) ? 0 : 1;
 }
 
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
@@ -70,6 +72,9 @@ int vigenere_keySize(char *argv)
 
 int vigenere_parseKey(char *argv, void *key)
 {
-	stringToAlphabet(argv, key);
-	return 0; /* TODO */
+	if (!strlen(argv))
+		return 1;
+	Alphabet *k = (Alphabet*)key;
+	AlphabetSubset s = stringToAlphabet(argv, k);
+	return (s == AlphabetSubsetCipher) ? 0 : 1;
 }
