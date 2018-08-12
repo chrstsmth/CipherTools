@@ -10,6 +10,7 @@ typedef struct Node Node;
 struct Node {
 	Node *next[AlphabetSubsetLangM];
 	int freq;
+	int populated;
 };
 
 typedef struct {

@@ -65,6 +65,7 @@ int langM_insertWord(LanguageModel *langM, char *c)
 				break;
 			}
 			langM_initNode(*next);
+			cursor->populated++;
 		}
 
 		cursor = *next;
@@ -108,6 +109,7 @@ int langM_deserializeNode(Node *n, FILE *f)
 				return 1;
 			}
 			langM_initNode(*next);
+			n->populated++;
 		}
 
 		if (langM_deserializeNode(*next, f))
