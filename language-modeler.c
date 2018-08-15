@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
 		fclose(in);
 	}
 
+	langM_order(&langM);
 	langM_serialize(&langM, stdout);
 }
 
