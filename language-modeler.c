@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 		case 'd':
 			opt.depth = strtol(EARGF(usage()), NULL, 10);
 			break;
-		case 'h': /* Fall through */
-		default:
+		case 'h':
+		default: /* Fall through */
 			usage();
 	} ARGEND;
 
