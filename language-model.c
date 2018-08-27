@@ -133,7 +133,8 @@ int langM_serializeNode(Node *n, FILE *f)
 		if (next) {
 			if (fprintf(f ,"%c", alphabetToChar((Alphabet)i)) < 0)
 				return 1;
-			langM_serializeNode(next, f);
+			if (langM_serializeNode(next, f))
+				return 1;
 		}
 	}
 	fprintf(f ,")");
