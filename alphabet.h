@@ -46,7 +46,7 @@ Alphabet alphabet_add(Alphabet a, Alphabet b);
 Alphabet alphabet_subtract(Alphabet a, Alphabet b);
 Alphabet charToAlphabet(char c);
 char alphabetToChar(Alphabet a);
-Alphabet stringToAlphabet(char *c, Alphabet *a);
+AlphabetSubset stringToAlphabet(char *c, Alphabet *a);
 void alphabetToString(Alphabet *a, char *c);
 bool isAlphabetSubsetCipher(Alphabet a);
 bool isAlphabetSubsetLangM(Alphabet a);

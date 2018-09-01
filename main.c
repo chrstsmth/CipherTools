@@ -73,7 +73,8 @@ int main(int argc, char *argv[])
 				exit(1);
 			if (!(opt.textOut = malloc(bufferSize * sizeof(&opt.textOut))))
 				exit(1);
-			stringToAlphabet(text, opt.textIn);
+			if (stringToAlphabet(text, opt.textIn) > AlphabetSubsetLangM)
+				usage();
 			break;
 		}
 		case 'k':

@@ -33,17 +33,17 @@ AlphabetSubset getAlphabetSubset(Alphabet a)
 
 bool isAlphabetSubsetCipher(Alphabet a)
 {
-	return (a < (int)AlphabetSubsetCipher);
+	return (a < (Alphabet)AlphabetSubsetCipher);
 }
 
 bool isAlphabetSubsetLangM(Alphabet a)
 {
-	return (a < (int)AlphabetSubsetLangM);
+	return (a < (Alphabet)AlphabetSubsetLangM);
 }
 
 bool isAlphabetSubsetAll(Alphabet a)
 {
-	return (a < (int)AlphabetSuperset);
+	return (a < (Alphabet)AlphabetSuperset);
 }
 
 Alphabet charToAlphabet(char c)
@@ -98,7 +98,7 @@ char alphabetToChar(Alphabet a)
 	return c;
 }
 
-Alphabet stringToAlphabet(char *c, Alphabet *a)
+AlphabetSubset stringToAlphabet(char *c, Alphabet *a)
 {
 	Alphabet max = 0;
 	for (; *c != '\0'; a++, c++) {
