@@ -13,6 +13,8 @@ typedef struct {
 	int (*parseKey)(char *argv, void *key);
 } Cipher;
 
+int scoreText(LanguageModel *langM, Alphabet* text);
+
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, void *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, void *key);
 int vigenere_keySize(char *argv);

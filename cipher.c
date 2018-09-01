@@ -78,3 +78,17 @@ int vigenere_parseKey(char *argv, void *key)
 	AlphabetSubset s = stringToAlphabet(argv, k);
 	return (s == AlphabetSubsetCipher) ? 0 : 1;
 }
+
+int scoreText(LanguageModel *langM, Alphabet* text)
+{
+	int score = 0;
+	for (;*text != AlphabetNull; text++) {
+		Node* cursor = langM->head;
+		for (int i = 0; cursor && text[i] != AlphabetNull; i++) {
+			Alphabet a = text[i];
+			score+=cursor->freq*i;
+			cursor = cursor->next[a];
+		}
+	}
+	return score;
+}
