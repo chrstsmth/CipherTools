@@ -116,3 +116,11 @@ void alphabetToString(Alphabet *a, char *c)
 	}
 	*c = '\0';
 }
+
+int alphabetStrlen(Alphabet *a)
+{
+	int i;
+	for (i = 0; a[i] != AlphabetNull; i++)
+		continue;
+	return i;
+}

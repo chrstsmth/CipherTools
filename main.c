@@ -8,6 +8,7 @@
 typedef enum {
 	CommandEncipher,
 	CommandDecipher,
+	CommandCrack,
 } Command;
 
 typedef struct {
@@ -48,6 +49,8 @@ int main(int argc, char *argv[])
 		opt.command = CommandEncipher;
 	} else if (strcmp(command, "decipher") == 0) {
 		opt.command = CommandDecipher;
+	} else if (strcmp(command, "crack") == 0) {
+		opt.command = CommandCrack;
 	} else {
 		usage();
 	}
@@ -101,6 +104,11 @@ int main(int argc, char *argv[])
 			if (!opt.textIn || !opt.key)
 				usage();
 			opt.cipher.decipher(opt.textIn, opt.textOut, opt.key);
+			break;
+		case CommandCrack:
+			if (!opt.textIn || !opt.langM.head)
+				usage();
+			opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM);
 			break;
 	}
 

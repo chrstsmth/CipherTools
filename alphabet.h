@@ -53,4 +53,6 @@ bool isAlphabetSubsetLangM(Alphabet a);
 bool isAlphabetSubsetAll(Alphabet a);
 AlphabetSubset getAlphabetSubset(Alphabet a);
 
+int alphabetStrlen(Alphabet *a);
+
 #endif /* ALPHABET_H */

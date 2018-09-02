@@ -5,6 +5,11 @@
 #include "cipher.h"
 #include "language-model.h"
 
+int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
+{
+	return 1;
+}
+
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
 {
 	Alphabet k[2] = {*(Alphabet*)key, AlphabetNull};
@@ -15,6 +20,30 @@ int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, void *key)
 {
 	Alphabet k[2] = {*(Alphabet*)key, AlphabetNull};
 	return vigenere_decipher(cipherText, plainText, k);
+}
+
+int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
+{
+	Alphabet key;
+	int score = 0;
+	int len = alphabetStrlen(cipherText);
+	Alphabet buffer[2][len + 1];
+	int select = 0;
+
+	for (int i = 0; i < AlphabetSubsetCipher; i++) {
+		key = (Alphabet)i;
+		caesar_decipher(cipherText, buffer[select], &key);
+
+		int newScore = scoreText(langM, buffer[select]);
+		if (newScore > score) {
+			score = newScore;
+			select = (select + 1) % 2;
+		}
+	}
+	select = (select + 1) % 2;
+	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
+	plainText[len] = AlphabetNull;
+	return 0;
 }
 
 int caesar_keySize(char *argv)
