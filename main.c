@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,6 +24,7 @@ typedef struct {
 } Options;
 
 void usage();
+void die(const char *errstr, ...);
 void options_init(Options *opts);
 char *argv0;
 
@@ -40,7 +43,7 @@ int main(int argc, char *argv[])
 	} else if (strcmp(ciphername, "caesar") == 0) {
 		opt.cipher = ciphers[CipherCaesar];
 	} else {
-		usage();
+		die("%s: %s\n", ciphername, strerror(EINVAL));
 	}
 
 	argc--; argv++;
@@ -52,69 +55,76 @@ int main(int argc, char *argv[])
 	} else if (strcmp(command, "crack") == 0) {
 		opt.command = CommandCrack;
 	} else {
-		usage();
+		die("%s: %s\n", command, strerror(EINVAL));
 	}
 
 	ARGBEGIN {
 		case 'l':
 		{
-			FILE *in = fopen(EARGF(usage()), "r");
+			char *filename = EARGF(die("-l requres an argument\n"));
+			FILE *in = fopen(filename, "r");
 			if (!in)
-				usage();
+				die("%s: %s\n", filename, strerror(errno));
 			if (langM_init(&opt.langM))
-				usage();
+				die("%s: %s\n", filename, strerror(errno));
 			if (langM_deserialize(&opt.langM, in))
-				usage();
+				die("%s: %s\n", filename, strerror(errno));
 			break;
 		}
 		case 't':
 		{
-			char *text = EARGF(usage());
+			char *text = EARGF(die("-t requres an argument\n"));
 			opt.textLength = strlen(text);
 			int bufferSize = opt.textLength + 1;
 			if (!(opt.textIn = malloc(bufferSize * sizeof(&opt.textIn))))
-				exit(1);
+				die("malloc: %s\n", strerror(errno));
 			if (!(opt.textOut = malloc(bufferSize * sizeof(&opt.textOut))))
-				exit(1);
-			if (stringToAlphabet(text, opt.textIn) > AlphabetSubsetLangM)
-				usage();
+				die("malloc: %s\n", strerror(errno));
+			if (stringToAlphabet(text, opt.textIn) > AlphabetSubsetLangM) {
+				die("text: %s\n", strerror(EINVAL));
+			}
 			break;
 		}
 		case 'k':
 		{
-			char *key = EARGF(usage());
+			char *key = EARGF(die("-k requres an argument\n"));
 			if (!(opt.key = malloc(opt.cipher.keySize(key))))
-				exit(1);
+				die("malloc: %s\n", strerror(errno));
 			if (opt.cipher.parseKey(key, opt.key))
-				usage();
+				die("key: %s\n", strerror(errno));
 		}
 			break;
-		case 'h': /* Fall through */
-		default:
+		case 'h':
 			usage();
+			break;
+		default:
+			die("-%c: %s\n", ARGC(), strerror(EINVAL));
 	} ARGEND;
 
 	switch (opt.command) {
 		case CommandEncipher:
 			if (!opt.textIn || !opt.key)
 				usage();
-			opt.cipher.encipher(opt.textIn, opt.textOut, opt.key);
+			if (opt.cipher.encipher(opt.textIn, opt.textOut, opt.key))
+				die("encipher: %s\n", strerror(errno));
 			break;
 		case CommandDecipher:
 			if (!opt.textIn || !opt.key)
 				usage();
-			opt.cipher.decipher(opt.textIn, opt.textOut, opt.key);
+			if (opt.cipher.decipher(opt.textIn, opt.textOut, opt.key))
+				die("decipher: %s\n", strerror(errno));
 			break;
 		case CommandCrack:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM);
+			if (opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM))
+				die("crack: %s\n", strerror(errno));
 			break;
 	}
 
 	char out[opt.textLength + 1];
 	alphabetToString(opt.textOut, out);
-	printf("%s", out);
+	printf("%s\n", out);
 
 	free(opt.key);
 	free(opt.textIn);
@@ -125,6 +135,16 @@ int main(int argc, char *argv[])
 void usage()
 {
 	fputs("usage: main\n", stderr);
+	exit(EXIT_FAILURE);
+}
+
+void die(const char *errstr, ...)
+{
+	va_list ap;
+
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	va_end(ap);
 	exit(EXIT_FAILURE);
 }
 

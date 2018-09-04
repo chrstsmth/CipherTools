@@ -58,16 +58,16 @@ int langM_insertWord(LanguageModel *langM, char *c)
 	for (; *c != '\0'; c++) {
 		/* Generate index */
 		Alphabet i = charToAlphabet(*c);
-		if(!isAlphabetSubsetLangM(i))
+		if(!isAlphabetSubsetLangM(i)) {
+			errno = EINVAL;
 			break;
+		}
 
 		/* Get next node. Malloc if null */
 		Node **next = &cursor->next[i];
 		if (!*next) {
-			if (!(*next = (Node*)malloc(sizeof(Node)))) {
-				errno = ENOMEM;
+			if (!(*next = (Node*)malloc(sizeof(Node))))
 				break;
-			}
 			langM_initNode(*next);
 			cursor->populated++;
 		}
@@ -93,10 +93,8 @@ int langM_orderNode(Node *n)
 		return 0;
 
 	free(n->order);
-	if (!(n->order = (Alphabet*)malloc(n->populated * sizeof(Alphabet)))) {
-		errno = ENOMEM;
+	if (!(n->order = (Alphabet*)malloc(n->populated * sizeof(Alphabet))))
 		return 1;
-	}
 
 	Node **buffer[n->populated];
 	Node ***cursor = buffer;
@@ -129,26 +127,30 @@ int langM_deserializeNode(Node *n, FILE *f)
 	Alphabet buffer[AlphabetSubsetLangM];
 	Alphabet *cursor = buffer;
 
-	if (fscanf(f, "%d", &freq) != 1)
+	if (fscanf(f, "%d", &freq) != 1) {
+		errno = EINVAL;
 		return 1;
+	}
 	n->freq+=freq;
 
-	if ((c = getc(f)) != '(')
+	if ((c = getc(f)) != '(') {
+		errno = EINVAL;
 		return 1;
+	}
 
 	while ((c = getc(f)) != ')') {
 		/* Generate index */
 		Alphabet i = charToAlphabet(c);
-		if(!isAlphabetSubsetLangM(i))
+		if(!isAlphabetSubsetLangM(i)) {
+			errno = EINVAL;
 			return 1;
+		}
 
 		/* Get next node. Malloc if null */
 		Node **next = &n->next[i];
 		if (!*next) {
-			if (!(*next = (Node*)malloc(sizeof(Node)))) {
-				errno = ENOMEM;
+			if (!(*next = (Node*)malloc(sizeof(Node))))
 				return 1;
-			}
 			langM_initNode(*next);
 			n->populated++;
 			*cursor++ = i;
@@ -157,12 +159,14 @@ int langM_deserializeNode(Node *n, FILE *f)
 		if (langM_deserializeNode(*next, f))
 			return 1;
 	}
-
-	free(n->order);
-	if (!(n->order = (Alphabet*)malloc(n->populated * sizeof(Alphabet)))) {
-		errno = ENOMEM;
+	if (c == EOF) {
+		errno = EINVAL;
 		return 1;
 	}
+
+	free(n->order);
+	if (!(n->order = (Alphabet*)malloc(n->populated * sizeof(Alphabet))))
+		return 1;
 	memcpy(n->order, buffer, n->populated);
 
 	return 0;

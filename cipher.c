@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -7,6 +8,7 @@
 
 int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
 {
+	errno = ENOTSUP;
 	return 1;
 }
 
@@ -53,8 +55,10 @@ int caesar_keySize(char *argv)
 
 int caesar_parseKey(char *argv, void *key)
 {
-	if (strlen(argv) != 1)
+	if (strlen(argv) != 1) {
+		errno = EINVAL;
 		return 1;
+	}
 	Alphabet *k = (Alphabet*)key;
 	*k = charToAlphabet(*argv);
 	return (isAlphabetSubsetCipher(*k)) ? 0 : 1;
@@ -66,7 +70,7 @@ int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
 	Alphabet *k0 = k;
 
 	if (*k == AlphabetNull)
-		return 1;
+		return 0;
 
 	for(; *plainText != AlphabetNull; plainText++, cipherText++, k++) {
 		if (*k == AlphabetNull)
@@ -83,7 +87,7 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, void *key)
 	Alphabet *k0 = k;
 
 	if (*k == AlphabetNull)
-		return 1;
+		return 0;
 
 	for(; *cipherText != AlphabetNull; plainText++, cipherText++, k++) {
 		if (*k == AlphabetNull)
@@ -101,11 +105,16 @@ int vigenere_keySize(char *argv)
 
 int vigenere_parseKey(char *argv, void *key)
 {
-	if (!strlen(argv))
-		return 1;
 	Alphabet *k = (Alphabet*)key;
-	AlphabetSubset s = stringToAlphabet(argv, k);
-	return (s == AlphabetSubsetCipher) ? 0 : 1;
+	if (!strlen(argv)) {
+		errno = EINVAL;
+		return 1;
+	}
+	if (!(stringToAlphabet(argv, k) == AlphabetSubsetCipher)) {
+		errno = EINVAL;
+		return 1;
+	}
+	return 0;
 }
 
 int scoreText(LanguageModel *langM, Alphabet* text)
