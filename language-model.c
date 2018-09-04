@@ -167,7 +167,7 @@ int langM_deserializeNode(Node *n, FILE *f)
 	free(n->order);
 	if (!(n->order = (Alphabet*)malloc(n->populated * sizeof(Alphabet))))
 		return 1;
-	memcpy(n->order, buffer, n->populated);
+	memcpy(n->order, buffer, n->populated * sizeof(Alphabet));
 
 	return 0;
 }

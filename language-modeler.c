@@ -96,7 +96,7 @@ int insertFile(LanguageModel *langM, int depth, FILE * in)
 
 	/* insert first word if we have one*/
 	if (i > 0) {
-		memcpy(word, buff, i);
+		memcpy(word, buff, i * sizeof(char));
 		word[i] = '\0';
 		if (langM_insertWord(langM, word) != depth)
 			return 1;
