@@ -11,6 +11,7 @@ typedef enum {
 	CommandEncipher,
 	CommandDecipher,
 	CommandCrack,
+	CommandDictionary,
 } Command;
 
 typedef struct {
@@ -21,6 +22,7 @@ typedef struct {
 	Alphabet *textOut;
 	int textLength;
 	void *key;
+	FILE *dictionary;
 } Options;
 
 void usage();
@@ -54,11 +56,20 @@ int main(int argc, char *argv[])
 		opt.command = CommandDecipher;
 	} else if (strcmp(command, "crack") == 0) {
 		opt.command = CommandCrack;
+	} else if (strcmp(command, "dictionary") == 0) {
+		opt.command = CommandDictionary;
 	} else {
 		die("%s: %s\n", command, strerror(EINVAL));
 	}
 
 	ARGBEGIN {
+		case 'd':
+		{
+			char *filename = EARGF(die("-d requres an argument\n"));
+			if (!(opt.dictionary = fopen(filename, "r")))
+				die("%s: %s\n", filename, strerror(errno));
+			break;
+		}
 		case 'l':
 		{
 			char *filename = EARGF(die("-l requres an argument\n"));
@@ -119,6 +130,12 @@ int main(int argc, char *argv[])
 				usage();
 			if (opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM))
 				die("crack: %s\n", strerror(errno));
+			break;
+		case CommandDictionary:
+			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
+				usage();
+			if (opt.cipher.dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))
+				die("dictionary: %s\n", strerror(errno));
 			break;
 	}
 

@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,6 +11,47 @@ int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel 
 {
 	errno = ENOTSUP;
 	return 1;
+}
+
+int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+{
+	errno = ENOTSUP;
+	return 1;
+}
+
+int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+{
+	char keyString[BUFSIZ];
+	int len = alphabetStrlen(cipherText);
+	Alphabet buffer[2][len + 1];
+	int select = 0;
+	int score = 0;
+
+	while (fgets(keyString, sizeof(keyString), dictionary) != NULL) {
+		char *p = strchr(keyString, '\n');
+		if (!p) {
+			errno = EOVERFLOW;
+			return 1;
+		}
+		*p = '\0';
+		void *key;
+		if (!(key = malloc(cipher.keySize(keyString))))
+			return 1;
+		if (cipher.parseKey(keyString, key))
+			return 1;
+		if (cipher.decipher(cipherText, buffer[select], key))
+			return 1;
+		int newScore = scoreText(langM, buffer[select]);
+		if (newScore > score) {
+			score = newScore;
+			select = (select + 1) % 2;
+		}
+		free(key);
+	}
+	select = (select + 1) % 2;
+	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
+	plainText[len] = AlphabetNull;
+	return 0;
 }
 
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
@@ -46,6 +88,11 @@ int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM
 	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
 	plainText[len] = AlphabetNull;
 	return 0;
+}
+
+int caesar_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+{
+	return dictionaryAttack(ciphers[CipherCaesar], cipherText, plainText, langM, dictionary);
 }
 
 int caesar_keySize(char *argv)
@@ -96,6 +143,11 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, void *key)
 	}
 	*plainText = AlphabetNull;
 	return 0;
+}
+
+int vigenere_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+{
+	return dictionaryAttack(ciphers[CipherVigenere], cipherText, plainText, langM, dictionary);
 }
 
 int vigenere_keySize(char *argv)
