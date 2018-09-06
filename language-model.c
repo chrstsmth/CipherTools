@@ -122,7 +122,7 @@ int langM_deserialize(LanguageModel *langM, FILE *f)
 
 int langM_deserializeNode(Node *n, FILE *f)
 {
-	char c;
+	int c;
 	int freq;
 	Alphabet buffer[AlphabetSubsetLangM];
 	Alphabet *cursor = buffer;
@@ -133,12 +133,12 @@ int langM_deserializeNode(Node *n, FILE *f)
 	}
 	n->freq+=freq;
 
-	if ((c = getc(f)) != '(') {
+	if (((c = getc(f)) != EOF) && (c != '(')) {
 		errno = EINVAL;
 		return 1;
 	}
 
-	while ((c = getc(f)) != ')') {
+	while (((c = getc(f)) != EOF) && (c != ')')) {
 		/* Generate index */
 		Alphabet i = charToAlphabet(c);
 		if(!isAlphabetSubsetLangM(i)) {
