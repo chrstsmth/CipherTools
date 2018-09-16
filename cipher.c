@@ -26,26 +26,28 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 	Alphabet buffer[2][len + 1];
 	int select = 0;
 	int score = 0;
+	int line = 1;
 
 	while (fgets(keyString, sizeof(keyString), dictionary) != NULL) {
 		char *p = strchr(keyString, '\n');
 		if (!p) {
 			errno = EOVERFLOW;
-			return 1;
+			return line;
 		}
 		*p = '\0';
 		void *key;
 		if (!(key = malloc(cipher.keySize(keyString))))
-			return 1;
+			return line;
 		if (cipher.parseKey(keyString, key))
-			return 1;
+			return line;
 		if (cipher.decipher(cipherText, buffer[select], key))
-			return 1;
+			return line;
 		int newScore = scoreText(langM, buffer[select]);
 		if (newScore > score) {
 			score = newScore;
 			select = (select + 1) % 2;
 		}
+		line++;
 		free(key);
 	}
 	select = (select + 1) % 2;

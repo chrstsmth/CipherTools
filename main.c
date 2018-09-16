@@ -134,8 +134,9 @@ int main(int argc, char *argv[])
 		case CommandDictionary:
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
-			if (opt.cipher.dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))
-				die("dictionary: %s\n", strerror(errno));
+			int line;
+			if ((line = (opt.cipher.dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))))
+				die("dictionary:%d: %s\n", line, strerror(errno));
 			break;
 	}
 
