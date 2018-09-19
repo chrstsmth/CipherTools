@@ -21,7 +21,7 @@ typedef struct {
 	Alphabet *textIn;
 	Alphabet *textOut;
 	int textLength;
-	void *key;
+	Key key;
 	FILE *dictionary;
 } Options;
 
@@ -98,10 +98,8 @@ int main(int argc, char *argv[])
 		}
 		case 'k':
 		{
-			char *key = EARGF(die("-k requres an argument\n"));
-			if (!(opt.key = malloc(opt.cipher.keySize(key))))
-				die("malloc: %s\n", strerror(errno));
-			if (opt.cipher.parseKey(key, opt.key))
+			char *keyString = EARGF(die("-k requres an argument\n"));
+			if (opt.cipher.initKey(&opt.key, keyString))
 				die("key: %s\n", strerror(errno));
 		}
 			break;
@@ -114,15 +112,15 @@ int main(int argc, char *argv[])
 
 	switch (opt.command) {
 		case CommandEncipher:
-			if (!opt.textIn || !opt.key)
+			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher.encipher(opt.textIn, opt.textOut, opt.key))
+			if (opt.cipher.encipher(opt.textIn, opt.textOut, &opt.key))
 				die("encipher: %s\n", strerror(errno));
 			break;
 		case CommandDecipher:
-			if (!opt.textIn || !opt.key)
+			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher.decipher(opt.textIn, opt.textOut, opt.key))
+			if (opt.cipher.decipher(opt.textIn, opt.textOut, &opt.key))
 				die("decipher: %s\n", strerror(errno));
 			break;
 		case CommandCrack:
@@ -144,7 +142,7 @@ int main(int argc, char *argv[])
 	alphabetToString(opt.textOut, out);
 	printf("%s\n", out);
 
-	free(opt.key);
+	opt.cipher.freeKey(&opt.key);
 	free(opt.textIn);
 	free(opt.textOut);
 	langM_free(&opt.langM);

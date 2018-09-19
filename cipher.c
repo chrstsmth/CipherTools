@@ -19,6 +19,11 @@ int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageM
 	return 1;
 }
 
+void freeKey(Key *key)
+{
+	free(key->buf);
+}
+
 int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
 {
 	char keyString[BUFSIZ];
@@ -35,12 +40,10 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 			return line;
 		}
 		*p = '\0';
-		void *key;
-		if (!(key = malloc(cipher.keySize(keyString))))
+		Key key;
+		if (cipher.initKey(&key, keyString))
 			return line;
-		if (cipher.parseKey(keyString, key))
-			return line;
-		if (cipher.decipher(cipherText, buffer[select], key))
+		if (cipher.decipher(cipherText, buffer[select], &key))
 			return line;
 		int newScore = scoreText(langM, buffer[select]);
 		if (newScore > score) {
@@ -48,7 +51,7 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 			select = (select + 1) % 2;
 		}
 		line++;
-		free(key);
+		cipher.freeKey(&key);
 	}
 	select = (select + 1) % 2;
 	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
@@ -56,28 +59,27 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 	return 0;
 }
 
-int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
+int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key)
 {
-	Alphabet k[2] = {*(Alphabet*)key, AlphabetNull};
-	return vigenere_encipher(plainText, cipherText, k);
+	return vigenere_encipher(plainText, cipherText, key);
 }
 
-int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, void *key)
+int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 {
-	Alphabet k[2] = {*(Alphabet*)key, AlphabetNull};
-	return vigenere_decipher(cipherText, plainText, k);
+	return vigenere_decipher(cipherText, plainText, key);
 }
 
 int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
 {
-	Alphabet key;
+	Alphabet a[2] = {a[1] = AlphabetNull};
+	Key key = {.a = a};
 	int score = 0;
 	int len = alphabetStrlen(cipherText);
 	Alphabet buffer[2][len + 1];
 	int select = 0;
 
 	for (int i = 0; i < AlphabetSubsetCipher; i++) {
-		key = (Alphabet)i;
+		key.a[0] = (Alphabet)i;
 		caesar_decipher(cipherText, buffer[select], &key);
 
 		int newScore = scoreText(langM, buffer[select]);
@@ -102,20 +104,26 @@ int caesar_keySize(char *argv)
 	return sizeof(Alphabet);
 }
 
-int caesar_parseKey(char *argv, void *key)
+int caesar_initKey(Key *key, char *argv)
 {
 	if (strlen(argv) != 1) {
 		errno = EINVAL;
 		return 1;
 	}
-	Alphabet *k = (Alphabet*)key;
-	*k = charToAlphabet(*argv);
-	return (isAlphabetSubsetCipher(*k)) ? 0 : 1;
+
+	if (!(key->buf = malloc(sizeof(Alphabet) * 2)))
+		return 1;
+	key->a[0] = charToAlphabet(*argv);
+	key->a[1] = AlphabetNull;
+
+	if (!isAlphabetSubsetCipher(key->a[1]))
+		return 1;
+	return 0;
 }
 
-int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
+int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key)
 {
-	Alphabet *k = (Alphabet*)key;
+	Alphabet *k = key->a;
 	Alphabet *k0 = k;
 
 	if (*k == AlphabetNull)
@@ -130,9 +138,9 @@ int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, void *key)
 	return 0;
 }
 
-int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, void *key)
+int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 {
-	Alphabet *k = (Alphabet*)key;
+	Alphabet *k = key->a;
 	Alphabet *k0 = k;
 
 	if (*k == AlphabetNull)
@@ -152,19 +160,18 @@ int vigenere_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel
 	return dictionaryAttack(ciphers[CipherVigenere], cipherText, plainText, langM, dictionary);
 }
 
-int vigenere_keySize(char *argv)
+int vigenere_initKey(Key *key, char *argv)
 {
-	return sizeof(Alphabet) * (strlen(argv) + 1);
-}
-
-int vigenere_parseKey(char *argv, void *key)
-{
-	Alphabet *k = (Alphabet*)key;
-	if (!strlen(argv)) {
+	int len = strlen(argv);
+	if (!len) {
 		errno = EINVAL;
 		return 1;
 	}
-	if (!(stringToAlphabet(argv, k) == AlphabetSubsetCipher)) {
+
+	if (!(key->buf = malloc(sizeof(Alphabet) * (len + 1))))
+			return 1;
+
+	if (!(stringToAlphabet(argv, key->a) == AlphabetSubsetCipher)) {
 		errno = EINVAL;
 		return 1;
 	}
