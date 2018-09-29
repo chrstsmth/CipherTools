@@ -18,4 +18,4 @@ $(MODELER): $(MODELER).c $(OBJ)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) *.o
