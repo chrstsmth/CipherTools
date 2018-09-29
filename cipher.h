@@ -14,6 +14,7 @@ typedef struct {
 		void *buf;
 		Alphabet *a;
 	};
+	size_t n;
 } Key;
 
 typedef struct {
@@ -22,6 +23,7 @@ typedef struct {
 	int (*crack)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
 	int (*initKey)(Key *key, char *argv);
+	int (*copyKey)(Key *key, Key *other);
 	void (*freeKey)(Key *key);
 } Cipher;
 
@@ -31,6 +33,7 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
 void freeKey(Key *key);
+int copyKey(Key *key, Key *other);
 
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
@@ -50,6 +53,7 @@ static const Cipher ciphers[] = {
 		&caesar_crack,
 		&caesar_dictionary,
 		&caesar_initKey,
+		&copyKey,
 		&freeKey,
 	},
 	[CipherVigenere] = {
@@ -58,6 +62,7 @@ static const Cipher ciphers[] = {
 		&crackUnimplemented,
 		&vigenere_dictionary,
 		&vigenere_initKey,
+		&copyKey,
 		&freeKey,
 	}
 };
