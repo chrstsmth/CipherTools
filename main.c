@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "arg.h"
+#include "candidates.h"
 #include "cipher.h"
 #include "language-model.h"
 
@@ -20,6 +21,7 @@ typedef struct {
 	Command command;
 	Alphabet *textIn;
 	Alphabet *textOut;
+	Candidates candidates;
 	int textLength;
 	Key key;
 	FILE *dictionary;
@@ -111,6 +113,8 @@ int main(int argc, char *argv[])
 			die("-%c: %s\n", ARGC(), strerror(EINVAL));
 	} ARGEND;
 
+	candidates_init(&opt.candidates, 30);
+
 	switch (opt.command) {
 		case CommandEncipher:
 			if (!opt.textIn || !opt.key.buf)
@@ -134,14 +138,25 @@ int main(int argc, char *argv[])
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
 			int line;
-			if ((line = (opt.cipher->dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))))
+			if ((line = (opt.cipher->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary))))
 				die("%s dictionary:%d: %s\n", opt.cipher->name, line, strerror(errno));
 			break;
 	}
 
-	char out[opt.textLength + 1];
-	alphabetToString(opt.textOut, out);
-	printf("%s\n", out);
+	switch (opt.command){
+		case CommandEncipher: /* Fall Through */
+		case CommandDecipher: /* Fall Through */
+		case CommandCrack:
+		{
+			char out[opt.textLength + 1];
+			alphabetToString(opt.textOut, out);
+			printf("%s\n", out);
+			break;
+		}
+		case CommandDictionary:
+			candidates_print(&opt.candidates, stdout);
+			break;
+	}
 
 	if (opt.dictionary)
 		fclose(opt.dictionary);
@@ -149,6 +164,7 @@ int main(int argc, char *argv[])
 	free(opt.textIn);
 	free(opt.textOut);
 	langM_free(&opt.langM);
+	candidates_free(&opt.candidates);
 }
 
 void usage()

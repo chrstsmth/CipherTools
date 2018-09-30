@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "alphabet.h"
+#include "candidates.h"
 #include "cipher.h"
 #include "language-model.h"
 
@@ -42,13 +43,11 @@ int serializeKeyAlphabet(Key *key, FILE *f)
 	return 0;
 }
 
-int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	char keyString[BUFSIZ];
 	int len = alphabetStrlen(cipherText);
-	Alphabet buffer[2][len + 1];
-	int select = 0;
-	int score = 0;
+	Alphabet plainText[len + 1];
 	int line = 1;
 
 	while (fgets(keyString, sizeof(keyString), dictionary) != NULL) {
@@ -59,21 +58,16 @@ int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, L
 		}
 		*p = '\0';
 		Key key;
-		if (cipher.initKey(&key, keyString))
+		if (cipher->initKey(&key, keyString))
 			return line;
-		if (cipher.decipher(cipherText, buffer[select], &key))
+		if (cipher->decipher(cipherText, plainText, &key))
 			return line;
-		int newScore = scoreText(langM, buffer[select]);
-		if (newScore > score) {
-			score = newScore;
-			select = (select + 1) % 2;
-		}
+		int score = scoreText(langM, plainText);
+		Candidate c = { &key, plainText, cipher, score };
+		candidates_copyInsert(candidates, &c);
 		line++;
-		cipher.freeKey(&key);
+		cipher->freeKey(&key);
 	}
-	select = (select + 1) % 2;
-	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
-	plainText[len] = AlphabetNull;
 	return 0;
 }
 
@@ -112,9 +106,9 @@ int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM
 	return 0;
 }
 
-int caesar_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
-	return dictionaryAttack(ciphers[CipherCaesar], cipherText, plainText, langM, dictionary);
+	return dictionaryAttack(&ciphers[CipherCaesar], cipherText, candidates, langM, dictionary);
 }
 
 int caesar_keySize(char *argv)
@@ -175,9 +169,9 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 	return 0;
 }
 
-int vigenere_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
-	return dictionaryAttack(ciphers[CipherVigenere], cipherText, plainText, langM, dictionary);
+	return dictionaryAttack(&ciphers[CipherVigenere], cipherText, candidates, langM, dictionary);
 }
 
 int vigenere_initKey(Key *key, char *argv)

@@ -2,8 +2,10 @@
 #define CIPHER_H
 
 #include "alphabet.h"
+#include "candidates.h"
 #include "language-model.h"
 
+typedef struct Candidates Candidates;
 
 enum {
 	CipherCaesar,
@@ -23,7 +25,7 @@ typedef struct {
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
-	int (*dictionary)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
+	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 	int (*initKey)(Key *key, char *argv);
 	int (*serializeKey)(Key *key, FILE *f);
 	int (*copyKey)(Key *key, Key *other);
@@ -31,7 +33,7 @@ typedef struct {
 } Cipher;
 
 int scoreText(LanguageModel *langM, Alphabet* text);
-int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
+int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 
 int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
@@ -42,14 +44,14 @@ int copyKey(Key *key, Key *other);
 static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
-int vigenere_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
+int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 int vigenere_initKey(Key *key, char *argv);
 
 static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
-int caesar_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
+int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 int caesar_initKey(Key *key, char *argv);
 
 static const Cipher ciphers[] = {
