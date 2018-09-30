@@ -73,13 +73,14 @@ int main(int argc, char *argv[])
 		case 'l':
 		{
 			char *filename = EARGF(die("-l requres an argument\n"));
-			FILE *in = fopen(filename, "r");
-			if (!in)
+			FILE *f = fopen(filename, "r");
+			if (!f)
 				die("%s: %s\n", filename, strerror(errno));
 			if (langM_init(&opt.langM))
 				die("%s: %s\n", filename, strerror(errno));
-			if (langM_deserialize(&opt.langM, in))
+			if (langM_deserialize(&opt.langM, f))
 				die("%s: %s\n", filename, strerror(errno));
+			fclose(f);
 			break;
 		}
 		case 't':
@@ -142,6 +143,8 @@ int main(int argc, char *argv[])
 	alphabetToString(opt.textOut, out);
 	printf("%s\n", out);
 
+	if (opt.dictionary)
+		fclose(opt.dictionary);
 	opt.cipher->freeKey(&opt.key);
 	free(opt.textIn);
 	free(opt.textOut);
