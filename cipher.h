@@ -1,8 +1,9 @@
+#ifndef CIPHER_H
+#define CIPHER_H
+
 #include "alphabet.h"
 #include "language-model.h"
 
-#ifndef CIPHER_H
-#define CIPHER_H
 
 enum {
 	CipherCaesar,
