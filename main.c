@@ -115,26 +115,26 @@ int main(int argc, char *argv[])
 			if (!opt.textIn || !opt.key.buf)
 				usage();
 			if (opt.cipher.encipher(opt.textIn, opt.textOut, &opt.key))
-				die("encipher: %s\n", strerror(errno));
+				die("%s encipher: %s\n", opt.cipher.name, strerror(errno));
 			break;
 		case CommandDecipher:
 			if (!opt.textIn || !opt.key.buf)
 				usage();
 			if (opt.cipher.decipher(opt.textIn, opt.textOut, &opt.key))
-				die("decipher: %s\n", strerror(errno));
+				die("%s decipher: %s\n", opt.cipher.name, strerror(errno));
 			break;
 		case CommandCrack:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
 			if (opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM))
-				die("crack: %s\n", strerror(errno));
+				die("%s crack: %s\n", opt.cipher.name, strerror(errno));
 			break;
 		case CommandDictionary:
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
 			int line;
 			if ((line = (opt.cipher.dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))))
-				die("dictionary:%d: %s\n", line, strerror(errno));
+				die("%s dictionary:%d: %s\n", opt.cipher.name, line, strerror(errno));
 			break;
 	}
 
