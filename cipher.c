@@ -33,6 +33,15 @@ int copyKey(Key *key, Key *other)
 	return 0;
 }
 
+int serializeKeyAlphabet(Key *key, FILE *f)
+{
+	char out[alphabetStrlen(key->a) + 1];
+	alphabetToString(key->a, out);
+	if (fprintf(f, "%s", out) < 0)
+		return 1;
+	return 0;
+}
+
 int dictionaryAttack(Cipher cipher, Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
 {
 	char keyString[BUFSIZ];
