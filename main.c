@@ -16,7 +16,7 @@ typedef enum {
 
 typedef struct {
 	LanguageModel langM;
-	Cipher cipher;
+	const Cipher *cipher;
 	Command command;
 	Alphabet *textIn;
 	Alphabet *textOut;
@@ -41,9 +41,9 @@ int main(int argc, char *argv[])
 	argc--; argv++;
 	char *ciphername = *argv;
 	if (strcmp(ciphername, "vigenere") == 0) {
-		opt.cipher = ciphers[CipherVigenere];
+		opt.cipher = &ciphers[CipherVigenere];
 	} else if (strcmp(ciphername, "caesar") == 0) {
-		opt.cipher = ciphers[CipherCaesar];
+		opt.cipher = &ciphers[CipherCaesar];
 	} else {
 		die("%s: %s\n", ciphername, strerror(EINVAL));
 	}
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 		case 'k':
 		{
 			char *keyString = EARGF(die("-k requres an argument\n"));
-			if (opt.cipher.initKey(&opt.key, keyString))
+			if (opt.cipher->initKey(&opt.key, keyString))
 				die("key: %s\n", strerror(errno));
 		}
 			break;
@@ -114,27 +114,27 @@ int main(int argc, char *argv[])
 		case CommandEncipher:
 			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher.encipher(opt.textIn, opt.textOut, &opt.key))
-				die("%s encipher: %s\n", opt.cipher.name, strerror(errno));
+			if (opt.cipher->encipher(opt.textIn, opt.textOut, &opt.key))
+				die("%s encipher: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandDecipher:
 			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher.decipher(opt.textIn, opt.textOut, &opt.key))
-				die("%s decipher: %s\n", opt.cipher.name, strerror(errno));
+			if (opt.cipher->decipher(opt.textIn, opt.textOut, &opt.key))
+				die("%s decipher: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandCrack:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			if (opt.cipher.crack(opt.textIn, opt.textOut, &opt.langM))
-				die("%s crack: %s\n", opt.cipher.name, strerror(errno));
+			if (opt.cipher->crack(opt.textIn, opt.textOut, &opt.langM))
+				die("%s crack: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandDictionary:
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
 			int line;
-			if ((line = (opt.cipher.dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))))
-				die("%s dictionary:%d: %s\n", opt.cipher.name, line, strerror(errno));
+			if ((line = (opt.cipher->dictionary(opt.textIn, opt.textOut, &opt.langM, opt.dictionary))))
+				die("%s dictionary:%d: %s\n", opt.cipher->name, line, strerror(errno));
 			break;
 	}
 
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 	alphabetToString(opt.textOut, out);
 	printf("%s\n", out);
 
-	opt.cipher.freeKey(&opt.key);
+	opt.cipher->freeKey(&opt.key);
 	free(opt.textIn);
 	free(opt.textOut);
 	langM_free(&opt.langM);
