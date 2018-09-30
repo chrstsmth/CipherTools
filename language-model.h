@@ -25,4 +25,4 @@ int langM_order(LanguageModel *langM);
 int langM_deserialize(LanguageModel *langM, FILE *f);
 int langM_serialize(LanguageModel *langM, FILE *f);
 
-#endif /* LANGUAGE_MODEL_H */
+#endif

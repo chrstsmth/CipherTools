@@ -76,4 +76,4 @@ static const Cipher ciphers[] = {
 		&freeKey,
 	}
 };
-#endif /* CIPHER_H */
+#endif

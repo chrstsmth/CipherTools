@@ -55,4 +55,4 @@ AlphabetSubset getAlphabetSubset(Alphabet a);
 
 int alphabetStrlen(Alphabet *a);
 
-#endif /* ALPHABET_H */
+#endif
