@@ -18,6 +18,7 @@ typedef struct {
 } Key;
 
 typedef struct {
+	const char *name;
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
@@ -37,11 +38,13 @@ void freeKey(Key *key);
 int serializeKeyAlphabet(Key *key, FILE *f);
 int copyKey(Key *key, Key *other);
 
+static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int vigenere_dictionary(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
 int vigenere_initKey(Key *key, char *argv);
 
+static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
@@ -50,6 +53,7 @@ int caesar_initKey(Key *key, char *argv);
 
 static const Cipher ciphers[] = {
 	[CipherCaesar] = {
+		caesarName,
 		&caesar_encipher,
 		&caesar_decipher,
 		&caesar_crack,
@@ -60,6 +64,7 @@ static const Cipher ciphers[] = {
 		&freeKey,
 	},
 	[CipherVigenere] = {
+		vigenereName,
 		&vigenere_encipher,
 		&vigenere_decipher,
 		&crackUnimplemented,
