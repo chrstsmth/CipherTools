@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 		case CommandCrack:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			if (opt.cipher->crack(opt.textIn, opt.textOut, &opt.langM))
+			if (opt.cipher->crack(opt.textIn, &opt.candidates, &opt.langM))
 				die("%s crack: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandDictionary:

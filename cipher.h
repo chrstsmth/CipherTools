@@ -24,7 +24,7 @@ typedef struct {
 	const char *name;
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
-	int (*crack)(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
+	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 	int (*initKey)(Key *key, char *argv);
 	int (*serializeKey)(Key *key, FILE *f);
@@ -35,8 +35,8 @@ typedef struct {
 int scoreText(LanguageModel *langM, Alphabet* text);
 int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 
-int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
-int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary);
+int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 void freeKey(Key *key);
 int serializeKeyAlphabet(Key *key, FILE *f);
 int copyKey(Key *key, Key *other);
@@ -50,7 +50,6 @@ int vigenere_initKey(Key *key, char *argv);
 static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
-int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM);
 int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 int caesar_initKey(Key *key, char *argv);
 
@@ -59,7 +58,7 @@ static const Cipher ciphers[] = {
 		caesarName,
 		&caesar_encipher,
 		&caesar_decipher,
-		&caesar_crack,
+		&crackUnimplemented,
 		&caesar_dictionary,
 		&caesar_initKey,
 		&serializeKeyAlphabet,

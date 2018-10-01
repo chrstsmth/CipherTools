@@ -8,13 +8,13 @@
 #include "cipher.h"
 #include "language-model.h"
 
-int crackUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
+int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
 {
 	errno = ENOTSUP;
 	return 1;
 }
 
-int dictionaryUnimplemented(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM, FILE *dictionary)
+int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	errno = ENOTSUP;
 	return 1;
@@ -79,31 +79,6 @@ int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key)
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 {
 	return vigenere_decipher(cipherText, plainText, key);
-}
-
-int caesar_crack(Alphabet *cipherText, Alphabet *plainText, LanguageModel *langM)
-{
-	Alphabet a[2] = {a[1] = AlphabetNull};
-	Key key = {.a = a};
-	int score = 0;
-	int len = alphabetStrlen(cipherText);
-	Alphabet buffer[2][len + 1];
-	int select = 0;
-
-	for (int i = 0; i < AlphabetSubsetCipher; i++) {
-		key.a[0] = (Alphabet)i;
-		caesar_decipher(cipherText, buffer[select], &key);
-
-		int newScore = scoreText(langM, buffer[select]);
-		if (newScore > score) {
-			score = newScore;
-			select = (select + 1) % 2;
-		}
-	}
-	select = (select + 1) % 2;
-	memcpy(plainText, buffer[select], len * sizeof(Alphabet));
-	plainText[len] = AlphabetNull;
-	return 0;
 }
 
 int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
