@@ -22,6 +22,8 @@ int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, Langua
 
 void freeKey(Key *key)
 {
+	if (!key)
+		return;
 	free(key->buf);
 }
 
