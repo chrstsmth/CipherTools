@@ -3,6 +3,7 @@
 
 #include "alphabet.h"
 #include "candidates.h"
+#include "key.h"
 #include "language-model.h"
 
 typedef struct Candidates Candidates;
@@ -11,14 +12,6 @@ enum {
 	CipherCaesar,
 	CipherVigenere,
 };
-
-typedef struct {
-	union {
-		void *buf;
-		Alphabet *a;
-	};
-	size_t n;
-} Key;
 
 typedef struct {
 	const char *name;
@@ -37,21 +30,16 @@ int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *can
 
 int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-void freeKey(Key *key);
-int serializeKeyAlphabet(Key *key, FILE *f);
-int copyKey(Key *key, Key *other);
 
 static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int vigenere_initKey(Key *key, char *argv);
 
 static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int caesar_initKey(Key *key, char *argv);
 
 static const Cipher ciphers[] = {
 	[CipherCaesar] = {

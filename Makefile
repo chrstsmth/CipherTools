@@ -3,8 +3,8 @@ CFLAGS = -std=c99 -g -Wall -I.
 TARGET = language-model
 MODELER = language-modeler
 MAIN = main
-DEPS = language-model.h alphabet.h cipher.h candidates.h
-OBJ = language-model.o alphabet.o cipher.o candidates.o
+DEPS = language-model.h alphabet.h cipher.h candidates.h key.h
+OBJ = language-model.o alphabet.o cipher.o candidates.o key.o
 
 all: $(MAIN) $(MODELER)
 
