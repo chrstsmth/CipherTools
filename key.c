@@ -21,6 +21,13 @@ int copyKey(Key *key, Key *other)
 	return 0;
 }
 
+int equalKey(Key *key, Key *other)
+{
+	if (key->n != other->n)
+		return 0;
+	return !(memcmp(key->buf, other->buf, key->n));
+}
+
 int caesar_initKey(Key *key, char *argv)
 {
 	if (strlen(argv) != 1) {

@@ -21,6 +21,7 @@ int candidate_init(Candidate *candidate);
 int candidate_copy(Candidate *candidate, Candidate *other);
 void candidate_free(Candidate *candidate);
 int candidate_print(Candidate *candidate, FILE *f);
+int candidate_equal(Candidate *candidate, Candidate *other);
 
 int candidates_init(Candidates *candidates, size_t n);
 void candidates_free(Candidates *candidates);

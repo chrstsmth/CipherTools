@@ -42,12 +42,15 @@ int candidates_copyInsert(Candidates *candidates, Candidate *candidate)
 	if (last && last->score > candidate->score)
 		return 0;
 
-	/* Determine where candidate should be inserted */
+	/* Determine where the candidate should be inserted */
 	int i;
 	for (i = 0; i < candidates->n; i++) {
 		Candidate *contender = candidates->c[i];
 		if (!contender || candidate->score > contender->score)
 			break;
+		/* Don't insert the same candidate twice */
+		if (candidate_equal(candidate, contender))
+			return 0;
 	}
 
 	/* Shift elements to make space for new candidate */
@@ -109,4 +112,15 @@ int candidate_copy(Candidate *candidate, Candidate *other)
 	candidate->cipher = other->cipher;
 	candidate->score = other->score;
 	return 0;
+}
+
+int candidate_equal(Candidate *candidate, Candidate *other)
+{
+	if (candidate->score != other->score)
+		return 0;
+	if (candidate->cipher != other->cipher)
+		return 0;
+	if (!candidate->cipher->k->equalKey(candidate->key, other->key))
+		return 0;
+	return 1;
 }
