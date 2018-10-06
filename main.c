@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 		case 'k':
 		{
 			char *keyString = EARGF(die("-k requres an argument\n"));
-			if (opt.cipher->initKey(&opt.key, keyString))
+			if (opt.cipher->k->initKey(&opt.key, keyString))
 				die("key: %s\n", strerror(errno));
 		}
 			break;
@@ -119,26 +119,26 @@ int main(int argc, char *argv[])
 		case CommandEncipher:
 			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher->encipher(opt.textIn, opt.textOut, &opt.key))
+			if (opt.cipher->c->encipher(opt.textIn, opt.textOut, &opt.key))
 				die("%s encipher: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandDecipher:
 			if (!opt.textIn || !opt.key.buf)
 				usage();
-			if (opt.cipher->decipher(opt.textIn, opt.textOut, &opt.key))
+			if (opt.cipher->c->decipher(opt.textIn, opt.textOut, &opt.key))
 				die("%s decipher: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandCrack:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			if (opt.cipher->crack(opt.textIn, &opt.candidates, &opt.langM))
+			if (opt.cipher->c->crack(opt.textIn, &opt.candidates, &opt.langM))
 				die("%s crack: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandDictionary:
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
 			int line;
-			if ((line = (opt.cipher->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary))))
+			if ((line = (opt.cipher->c->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary))))
 				die("%s dictionary:%d: %s\n", opt.cipher->name, line, strerror(errno));
 			break;
 	}
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
 	if (opt.dictionary)
 		fclose(opt.dictionary);
-	opt.cipher->freeKey(&opt.key);
+	opt.cipher->k->freeKey(&opt.key);
 	free(opt.textIn);
 	free(opt.textOut);
 	langM_free(&opt.langM);

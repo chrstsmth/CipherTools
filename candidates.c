@@ -87,7 +87,7 @@ int candidate_print(Candidate *candidate, FILE *f)
 	alphabetToString(candidate->text, strText);
 	if (fprintf(f, "(%s) ", strText) < 0)
 		return 1;
-	if (candidate->cipher->serializeKey(candidate->key, stdout))
+	if (candidate->cipher->k->serializeKey(candidate->key, stdout))
 		return 1;
 
 	return 0;

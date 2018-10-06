@@ -3,26 +3,23 @@
 
 #include "alphabet.h"
 #include "candidates.h"
+#include "ciphers.h"
 #include "key.h"
 #include "language-model.h"
 
 typedef struct Candidates Candidates;
 
-enum {
-	CipherCaesar,
-	CipherVigenere,
-};
-
-typedef struct {
-	const char *name;
+typedef struct CipherInterface {
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-	int (*initKey)(Key *key, char *argv);
-	int (*serializeKey)(Key *key, FILE *f);
-	int (*copyKey)(Key *key, Key *other);
-	void (*freeKey)(Key *key);
+} CipherInterface;
+
+typedef struct Cipher {
+	const char *name;
+	const CipherInterface *c;
+	const KeyInterface *k;
 } Cipher;
 
 int scoreText(LanguageModel *langM, Alphabet* text);
@@ -41,28 +38,32 @@ int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 
-static const Cipher ciphers[] = {
+
+static const CipherInterface ciphersInterfaces[] = {
 	[CipherCaesar] = {
-		caesarName,
 		&caesar_encipher,
 		&caesar_decipher,
 		&crackUnimplemented,
 		&caesar_dictionary,
-		&caesar_initKey,
-		&serializeKeyAlphabet,
-		&copyKey,
-		&freeKey,
 	},
 	[CipherVigenere] = {
-		vigenereName,
 		&vigenere_encipher,
 		&vigenere_decipher,
 		&crackUnimplemented,
 		&vigenere_dictionary,
-		&vigenere_initKey,
-		&serializeKeyAlphabet,
-		&copyKey,
-		&freeKey,
 	}
+};
+
+static const Cipher ciphers[] = {
+	[CipherCaesar] = {
+		caesarName,
+		&ciphersInterfaces[CipherCaesar],
+		&keyInterfaces[CipherCaesar],
+	},
+	[CipherVigenere] = {
+		vigenereName,
+		&ciphersInterfaces[CipherVigenere],
+		&keyInterfaces[CipherVigenere],
+	},
 };
 #endif

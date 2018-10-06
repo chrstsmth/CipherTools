@@ -44,15 +44,15 @@ int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *can
 		}
 		*p = '\0';
 		Key key;
-		if (cipher->initKey(&key, keyString))
+		if (cipher->k->initKey(&key, keyString))
 			return line;
-		if (cipher->decipher(cipherText, plainText, &key))
+		if (cipher->c->decipher(cipherText, plainText, &key))
 			return line;
 		int score = scoreText(langM, plainText);
 		Candidate c = { &key, plainText, cipher, score };
 		candidates_copyInsert(candidates, &c);
 		line++;
-		cipher->freeKey(&key);
+		cipher->k->freeKey(&key);
 	}
 	return 0;
 }
