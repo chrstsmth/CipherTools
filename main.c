@@ -9,6 +9,7 @@
 #include "candidates.h"
 #include "cipher.h"
 #include "language-model.h"
+#include "util.h"
 
 typedef enum {
 	CommandEncipher,
@@ -205,16 +206,6 @@ static void signal_handler(int signum)
 void usage()
 {
 	fputs("usage: main\n", stderr);
-	exit(EXIT_FAILURE);
-}
-
-void die(const char *errstr, ...)
-{
-	va_list ap;
-
-	va_start(ap, errstr);
-	vfprintf(stderr, errstr, ap);
-	va_end(ap);
 	exit(EXIT_FAILURE);
 }
 
