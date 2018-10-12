@@ -20,6 +20,12 @@ int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, Langua
 	return 1;
 }
 
+int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	errno = ENOTSUP;
+	return 1;
+}
+
 int serializeKeyAlphabet(Key *key, FILE *f)
 {
 	char out[alphabetStrlen(key->a) + 1];
@@ -72,6 +78,52 @@ int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *can
 		candidates_copyInsert(candidates, &c);
 		line++;
 		cipher->k->freeKey(&key);
+	}
+	return 0;
+}
+
+int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	Alphabet plainText[alphabetStrlen(cipherText) + 1];
+
+	for (;;) {
+		Key climberKey;
+		cipher->k->initRandomKey(&climberKey);
+		cipher->c->decipher(cipherText, plainText, &climberKey);
+		int score = scoreText(langM, plainText);
+
+		Candidate c = { &climberKey, plainText, cipher, score };
+		candidates_copyInsert(candidates, &c);
+
+		/* Hill climb until maxima is reached */
+		bool maxima;
+		do {
+			maxima = true;
+
+			/* Find best mutation */
+			int mutation = 0;
+			Key mutatedKey;
+			Key baseKey;
+			cipher->k->copyKey(&baseKey, &climberKey);
+			cipher->k->copyKey(&mutatedKey, &climberKey);
+			while (!cipher->k->nextMutationKey(&mutatedKey, &mutation)) {
+				cipher->c->decipher(cipherText, plainText, &mutatedKey);
+				int mutatedScore = scoreText(langM, plainText);
+
+				if (mutatedScore > score) {
+					score = mutatedScore;
+					cipher->k->freeKey(&climberKey);
+					cipher->k->copyKey(&climberKey, &mutatedKey);
+					maxima = false;
+
+					Candidate c = { &mutatedKey, plainText, cipher, mutatedScore };
+					candidates_copyInsert(candidates, &c);
+				}
+			}
+			cipher->k->freeKey(&baseKey);
+			cipher->k->freeKey(&mutatedKey);
+		} while (!maxima);
+		cipher->k->freeKey(&climberKey);
 	}
 	return 0;
 }
@@ -133,6 +185,11 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	return dictionaryAttack(&ciphers[CipherVigenere], cipherText, candidates, langM, dictionary);
+}
+
+int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	return hillClimb(&ciphers[CipherVigenere], cipherText, candidates, langM);
 }
 
 int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)

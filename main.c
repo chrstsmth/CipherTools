@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "arg.h"
 #include "candidates.h"
@@ -14,6 +15,7 @@ typedef enum {
 	CommandCrack,
 	CommandDictionary,
 	CommandBruteForce,
+	CommandHillClimb,
 } Command;
 
 typedef struct {
@@ -37,6 +39,7 @@ int main(int argc, char *argv[])
 {
 	Options opt;
 	options_init(&opt);
+	srand(time(NULL));
 
 	if (argc < 3)
 		usage();
@@ -63,6 +66,8 @@ int main(int argc, char *argv[])
 		opt.command = CommandDictionary;
 	} else if (strcmp(command, "bruteForce") == 0) {
 		opt.command = CommandBruteForce;
+	} else if (strcmp(command, "hillClimb") == 0) {
+		opt.command = CommandHillClimb;
 	} else {
 		die("%s: %s\n", command, strerror(EINVAL));
 	}
@@ -150,6 +155,12 @@ int main(int argc, char *argv[])
 			if ((opt.cipher->c->bruteForce(opt.textIn, &opt.candidates, &opt.langM)))
 				die("%s bruteForce: %s\n", opt.cipher->name, strerror(errno));
 			break;
+		case CommandHillClimb:
+			if (!opt.textIn || !opt.langM.head)
+				usage();
+			if ((opt.cipher->c->hillClimb(opt.textIn, &opt.candidates, &opt.langM)))
+				die("%s hillClimb: %s\n", opt.cipher->name, strerror(errno));
+			break;
 	}
 
 	switch (opt.command){
@@ -163,7 +174,8 @@ int main(int argc, char *argv[])
 			break;
 		}
 		case CommandBruteForce: /* Fall Through */
-		case CommandDictionary:
+		case CommandDictionary: /* Fall Through */
+		case CommandHillClimb:
 			candidates_print(&opt.candidates, stdout);
 			break;
 	}

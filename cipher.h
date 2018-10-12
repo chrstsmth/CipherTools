@@ -14,6 +14,7 @@ typedef struct CipherInterface {
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+	int (*hillClimb)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*bruteForce)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 } CipherInterface;
 
@@ -25,15 +26,18 @@ typedef struct Cipher {
 
 int scoreText(LanguageModel *langM, Alphabet* text);
 int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 static char caesarName[] = "Caesar";
@@ -48,6 +52,7 @@ static const CipherInterface ciphersInterfaces[] = {
 		&caesar_decipher,
 		&crackUnimplemented,
 		&caesar_dictionary,
+		&hillClimbUnimplemented,
 		&caesar_bruteForce,
 	},
 	[CipherVigenere] = {
@@ -55,6 +60,7 @@ static const CipherInterface ciphersInterfaces[] = {
 		&vigenere_decipher,
 		&crackUnimplemented,
 		&vigenere_dictionary,
+		&vigenere_hillClimb,
 		&vigenere_bruteForce,
 	}
 };

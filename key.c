@@ -88,6 +88,41 @@ int vigenere_initFirstKey(Key *key)
 	return vigenere_initKey(key, s);
 }
 
+int vigenere_initRandomKey(Key *key)
+{
+	int len = rand() % 10 + 1;
+	key->n = sizeof(Alphabet) * (len + 1);
+	if (!(key->buf = malloc(key->n)))
+		return 1;
+	key->a[len] = AlphabetNull;
+	for (Alphabet *a = key->a; *a != AlphabetNull; a++)
+		*a = (rand() % AlphabetSubsetCipher);
+	return 0;
+}
+
+int vigenere_nextMutationKey(Key *key, int *m)
+{
+	int prev = *m;
+	int next = *m + 1;
+	int len = key->n / sizeof(Alphabet) - 1;
+	int index, offset;
+
+	/* undo previous mutation */
+	index = prev / (AlphabetSubsetCipher - 1);
+	offset = prev % (AlphabetSubsetCipher - 1);
+	key->a[index] = alphabet_subtract(key->a[index], offset);
+
+	/* do next mutation */
+	index = next / (AlphabetSubsetCipher - 1);
+	offset = next % (AlphabetSubsetCipher - 1);
+	if (index >= len)
+		return 1;
+	key->a[index] = alphabet_add(key->a[index], offset);
+
+	*m = next;
+	return 0;
+}
+
 int vigenere_nextKey(Key *key)
 {
 	Alphabet *a;
