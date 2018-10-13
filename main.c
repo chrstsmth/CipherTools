@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -98,9 +99,9 @@ int main(int argc, char *argv[])
 			char *text = EARGF(die("-t requres an argument\n"));
 			opt.textLength = strlen(text);
 			int bufferSize = opt.textLength + 1;
-			if (!(opt.textIn = malloc(bufferSize * sizeof(&opt.textIn))))
+			if (!(opt.textIn = malloc(bufferSize * sizeof(*opt.textIn))))
 				die("malloc: %s\n", strerror(errno));
-			if (!(opt.textOut = malloc(bufferSize * sizeof(&opt.textOut))))
+			if (!(opt.textOut = malloc(bufferSize * sizeof(*opt.textOut))))
 				die("malloc: %s\n", strerror(errno));
 			if (stringToAlphabet(text, opt.textIn) > AlphabetSubsetLangM) {
 				die("text: %s\n", strerror(EINVAL));
