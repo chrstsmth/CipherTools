@@ -14,6 +14,7 @@ typedef struct CipherInterface {
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+	int (*bruteForce)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 } CipherInterface;
 
 typedef struct Cipher {
@@ -24,6 +25,7 @@ typedef struct Cipher {
 
 int scoreText(LanguageModel *langM, Alphabet* text);
 int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
@@ -32,12 +34,13 @@ static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
+int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
 int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-
+int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 
 static const CipherInterface ciphersInterfaces[] = {
 	[CipherCaesar] = {
@@ -45,12 +48,14 @@ static const CipherInterface ciphersInterfaces[] = {
 		&caesar_decipher,
 		&crackUnimplemented,
 		&caesar_dictionary,
+		&caesar_bruteForce,
 	},
 	[CipherVigenere] = {
 		&vigenere_encipher,
 		&vigenere_decipher,
 		&crackUnimplemented,
 		&vigenere_dictionary,
+		&vigenere_bruteForce,
 	}
 };
 

@@ -47,6 +47,21 @@ int caesar_initKey(Key *key, char *argv)
 	return 0;
 }
 
+int caesar_initFirstKey(Key *key)
+{
+	char *s = "a";
+	return caesar_initKey(key, s);
+}
+
+int caesar_nextKey(Key *key)
+{
+	/* Check if last key */
+	if (key->a[0] == AlphabetSubsetCipher - 1)
+		return 1;
+	key->a[0]++;
+	return 0;
+}
+
 int vigenere_initKey(Key *key, char *argv)
 {
 	int len = strlen(argv);
@@ -63,6 +78,31 @@ int vigenere_initKey(Key *key, char *argv)
 	if (!(stringToAlphabet(argv, key->a) == AlphabetSubsetCipher)) {
 		errno = EINVAL;
 		return 1;
+	}
+	return 0;
+}
+
+int vigenere_initFirstKey(Key *key)
+{
+	char *s = "a";
+	return vigenere_initKey(key, s);
+}
+
+int vigenere_nextKey(Key *key)
+{
+	Alphabet *a;
+
+	for (a = key->a; *a == AlphabetSubsetCipher - 1; a++)
+		*a = 0;
+	if (*a == AlphabetNull) {
+		key->n += sizeof(Alphabet);
+		if (!(key->buf = realloc(key->buf, key->n)))
+			return 1;
+		int len = key->n / sizeof(Alphabet);
+		key->a[len - 2] = (Alphabet)0;
+		key->a[len - 1] = AlphabetNull;
+	} else {
+		(*a)++;
 	}
 	return 0;
 }

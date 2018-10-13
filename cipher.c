@@ -29,6 +29,25 @@ int serializeKeyAlphabet(Key *key, FILE *f)
 	return 0;
 }
 
+int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	int len = alphabetStrlen(cipherText);
+	Alphabet plainText[len + 1];
+	Key key;
+
+	cipher->k->initFirstKey(&key);
+	for (;;) {
+		if (cipher->c->decipher(cipherText, plainText, &key))
+			return 1;
+		int score = scoreText(langM, plainText);
+		Candidate c = { &key, plainText, cipher, score };
+		candidates_copyInsert(candidates, &c);
+		if (cipher->k->nextKey(&key))
+			break;
+	}
+	return 0;
+}
+
 int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	char keyString[BUFSIZ];
@@ -72,6 +91,11 @@ int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageMode
 	return dictionaryAttack(&ciphers[CipherCaesar], cipherText, candidates, langM, dictionary);
 }
 
+int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	return bruteForce(&ciphers[CipherCaesar], cipherText, candidates, langM);
+}
+
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key)
 {
 	Alphabet *k = key->a;
@@ -109,6 +133,11 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	return dictionaryAttack(&ciphers[CipherVigenere], cipherText, candidates, langM, dictionary);
+}
+
+int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+{
+	return bruteForce(&ciphers[CipherVigenere], cipherText, candidates, langM);
 }
 
 int scoreText(LanguageModel *langM, Alphabet* text)

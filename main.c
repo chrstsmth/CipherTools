@@ -13,6 +13,7 @@ typedef enum {
 	CommandDecipher,
 	CommandCrack,
 	CommandDictionary,
+	CommandBruteForce,
 } Command;
 
 typedef struct {
@@ -60,6 +61,8 @@ int main(int argc, char *argv[])
 		opt.command = CommandCrack;
 	} else if (strcmp(command, "dictionary") == 0) {
 		opt.command = CommandDictionary;
+	} else if (strcmp(command, "bruteForce") == 0) {
+		opt.command = CommandBruteForce;
 	} else {
 		die("%s: %s\n", command, strerror(EINVAL));
 	}
@@ -141,6 +144,12 @@ int main(int argc, char *argv[])
 			if ((line = (opt.cipher->c->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary))))
 				die("%s dictionary:%d: %s\n", opt.cipher->name, line, strerror(errno));
 			break;
+		case CommandBruteForce:
+			if (!opt.textIn || !opt.langM.head)
+				usage();
+			if ((opt.cipher->c->bruteForce(opt.textIn, &opt.candidates, &opt.langM)))
+				die("%s bruteForce: %s\n", opt.cipher->name, strerror(errno));
+			break;
 	}
 
 	switch (opt.command){
@@ -153,6 +162,7 @@ int main(int argc, char *argv[])
 			printf("%s\n", out);
 			break;
 		}
+		case CommandBruteForce: /* Fall Through */
 		case CommandDictionary:
 			candidates_print(&opt.candidates, stdout);
 			break;

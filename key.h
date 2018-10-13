@@ -17,6 +17,8 @@ typedef struct Key {
 
 typedef struct KeyInterface {
 	int (*initKey)(Key *key, char *argv);
+	int (*initFirstKey)(Key *key);
+	int (*nextKey)(Key *key);
 	int (*serializeKey)(Key *key, FILE *f);
 	int (*copyKey)(Key *key, Key *other);
 	int (*equalKey)(Key *key, Key *other);
@@ -38,6 +40,8 @@ int vigenere_nextKey(Key *key);
 static const KeyInterface keyInterfaces[] = {
 	[CipherCaesar] = {
 		&caesar_initKey,
+		&caesar_initFirstKey,
+		&caesar_nextKey,
 		&serializeKeyAlphabet,
 		&copyKey,
 		&equalKey,
@@ -45,6 +49,8 @@ static const KeyInterface keyInterfaces[] = {
 	},
 	[CipherVigenere] = {
 		&vigenere_initKey,
+		&vigenere_initFirstKey,
+		&vigenere_nextKey,
 		&serializeKeyAlphabet,
 		&copyKey,
 		&equalKey,
