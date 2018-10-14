@@ -14,7 +14,6 @@ typedef struct Candidates Candidates;
 typedef struct CipherInterface {
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
-	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit);
 	int (*hillClimb)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 	int (*bruteForce)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
@@ -31,7 +30,6 @@ int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *can
 int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
-int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
 int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
@@ -52,7 +50,6 @@ static const CipherInterface ciphersInterfaces[] = {
 	[CipherCaesar] = {
 		&caesar_encipher,
 		&caesar_decipher,
-		&crackUnimplemented,
 		&caesar_dictionary,
 		&hillClimbUnimplemented,
 		&caesar_bruteForce,
@@ -60,7 +57,6 @@ static const CipherInterface ciphersInterfaces[] = {
 	[CipherVigenere] = {
 		&vigenere_encipher,
 		&vigenere_decipher,
-		&crackUnimplemented,
 		&vigenere_dictionary,
 		&vigenere_hillClimb,
 		&vigenere_bruteForce,

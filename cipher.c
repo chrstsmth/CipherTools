@@ -9,12 +9,6 @@
 #include "cipher.h"
 #include "language-model.h"
 
-int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
-{
-	errno = ENOTSUP;
-	return 1;
-}
-
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
 {
 	errno = ENOTSUP;

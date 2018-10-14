@@ -13,7 +13,6 @@
 typedef enum {
 	CommandEncipher,
 	CommandDecipher,
-	CommandCrack,
 	CommandDictionary,
 	CommandBruteForce,
 	CommandHillClimb,
@@ -75,8 +74,6 @@ int main(int argc, char *argv[])
 		opt.command = CommandEncipher;
 	} else if (strcmp(command, "decipher") == 0) {
 		opt.command = CommandDecipher;
-	} else if (strcmp(command, "crack") == 0) {
-		opt.command = CommandCrack;
 	} else if (strcmp(command, "dictionary") == 0) {
 		opt.command = CommandDictionary;
 	} else if (strcmp(command, "bruteForce") == 0) {
@@ -151,12 +148,6 @@ int main(int argc, char *argv[])
 			if (opt.cipher->c->decipher(opt.textIn, opt.textOut, &opt.key))
 				die("%s decipher: %s\n", opt.cipher->name, strerror(errno));
 			break;
-		case CommandCrack:
-			if (!opt.textIn || !opt.langM.head)
-				usage();
-			if (opt.cipher->c->crack(opt.textIn, &opt.candidates, &opt.langM))
-				die("%s crack: %s\n", opt.cipher->name, strerror(errno));
-			break;
 		case CommandDictionary:
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
@@ -178,10 +169,9 @@ int main(int argc, char *argv[])
 			break;
 	}
 
-	switch (opt.command){
+	switch (opt.command) {
 		case CommandEncipher: /* Fall Through */
-		case CommandDecipher: /* Fall Through */
-		case CommandCrack:
+		case CommandDecipher:
 		{
 			char out[opt.textLength + 1];
 			alphabetToString(opt.textOut, out);
