@@ -1,6 +1,8 @@
 #ifndef CIPHER_H
 #define CIPHER_H
 
+#include <signal.h>
+
 #include "alphabet.h"
 #include "candidates.h"
 #include "ciphers.h"
@@ -13,9 +15,9 @@ typedef struct CipherInterface {
 	int (*encipher)(Alphabet *plainText, Alphabet *cipherText, Key *key);
 	int (*decipher)(Alphabet *cipherText, Alphabet *plainText, Key *key);
 	int (*crack)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
-	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-	int (*hillClimb)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
-	int (*bruteForce)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+	int (*dictionary)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit);
+	int (*hillClimb)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
+	int (*bruteForce)(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 } CipherInterface;
 
 typedef struct Cipher {
@@ -25,26 +27,26 @@ typedef struct Cipher {
 } Cipher;
 
 int scoreText(LanguageModel *langM, Alphabet* text);
-int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
-int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit);
+int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
+int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
 int crackUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
 int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
 static char vigenereName[] = "Vigenere";
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
-int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
-int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit);
+int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
+int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
 static char caesarName[] = "Caesar";
 int caesar_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key);
 int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key);
-int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary);
-int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM);
+int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit);
+int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit);
 
 static const CipherInterface ciphersInterfaces[] = {
 	[CipherCaesar] = {

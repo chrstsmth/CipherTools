@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -g -Wall -I.
+CFLAGS = -std=c99 -g -Wall -I. -D_POSIX_C_SOURCE=200809L
 TARGET = language-model
 MODELER = language-modeler
 MAIN = main

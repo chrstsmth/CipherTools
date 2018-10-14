@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,11 @@ typedef struct {
 	FILE *dictionary;
 } Options;
 
+static struct {
+	sig_atomic_t interrupt;
+} sig;
+
+static void signal_handler(int signum);
 void usage();
 void die(const char *errstr, ...);
 void options_init(Options *opts);
@@ -43,6 +49,15 @@ int main(int argc, char *argv[])
 
 	if (argc < 3)
 		usage();
+
+	/* install signal handler */
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = signal_handler;
+	sigemptyset(&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGINT);
+	if (sigaction(SIGINT, &sa, NULL) == -1)
+		die("Failed to set signal handler: %s\n", strerror(errno));
 
 	argc--; argv++;
 	char *ciphername = *argv;
@@ -146,19 +161,19 @@ int main(int argc, char *argv[])
 			if (!opt.textIn || !opt.langM.head || !opt.dictionary)
 				usage();
 			int line;
-			if ((line = (opt.cipher->c->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary))))
+			if ((line = (opt.cipher->c->dictionary(opt.textIn, &opt.candidates, &opt.langM, opt.dictionary, &sig.interrupt))))
 				die("%s dictionary:%d: %s\n", opt.cipher->name, line, strerror(errno));
 			break;
 		case CommandBruteForce:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			if ((opt.cipher->c->bruteForce(opt.textIn, &opt.candidates, &opt.langM)))
+			if ((opt.cipher->c->bruteForce(opt.textIn, &opt.candidates, &opt.langM, &sig.interrupt)))
 				die("%s bruteForce: %s\n", opt.cipher->name, strerror(errno));
 			break;
 		case CommandHillClimb:
 			if (!opt.textIn || !opt.langM.head)
 				usage();
-			if ((opt.cipher->c->hillClimb(opt.textIn, &opt.candidates, &opt.langM)))
+			if ((opt.cipher->c->hillClimb(opt.textIn, &opt.candidates, &opt.langM, &sig.interrupt)))
 				die("%s hillClimb: %s\n", opt.cipher->name, strerror(errno));
 			break;
 	}
@@ -187,6 +202,14 @@ int main(int argc, char *argv[])
 	free(opt.textOut);
 	langM_free(&opt.langM);
 	candidates_free(&opt.candidates);
+}
+
+static void signal_handler(int signum)
+{
+	switch (signum) {
+		case SIGINT:
+			sig.interrupt = true;
+	}
 }
 
 void usage()

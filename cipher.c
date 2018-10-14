@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +21,7 @@ int dictionaryUnimplemented(Alphabet *cipherText, Candidates *candidates, Langua
 	return 1;
 }
 
-int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int hillClimbUnimplemented(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
 	errno = ENOTSUP;
 	return 1;
@@ -35,14 +36,14 @@ int serializeKeyAlphabet(Key *key, FILE *f)
 	return 0;
 }
 
-int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
 	int len = alphabetStrlen(cipherText);
 	Alphabet plainText[len + 1];
 	Key key;
 
 	cipher->k->initFirstKey(&key);
-	for (;;) {
+	while (!*exit) {
 		if (cipher->c->decipher(cipherText, plainText, &key))
 			return 1;
 		int score = scoreText(langM, plainText);
@@ -54,14 +55,14 @@ int bruteForce(const Cipher *cipher, Alphabet *cipherText, Candidates *candidate
 	return 0;
 }
 
-int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
+int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit)
 {
 	char keyString[BUFSIZ];
 	int len = alphabetStrlen(cipherText);
 	Alphabet plainText[len + 1];
 	int line = 1;
 
-	while (fgets(keyString, sizeof(keyString), dictionary) != NULL) {
+	while ((fgets(keyString, sizeof(keyString), dictionary) != NULL) && !*exit) {
 		char *p = strchr(keyString, '\n');
 		if (!p) {
 			errno = EOVERFLOW;
@@ -82,11 +83,11 @@ int dictionaryAttack(const Cipher *cipher, Alphabet *cipherText, Candidates *can
 	return 0;
 }
 
-int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
 	Alphabet plainText[alphabetStrlen(cipherText) + 1];
 
-	for (;;) {
+	while (!*exit) {
 		Key climberKey;
 		cipher->k->initRandomKey(&climberKey);
 		cipher->c->decipher(cipherText, plainText, &climberKey);
@@ -122,7 +123,7 @@ int hillClimb(const Cipher *cipher, Alphabet *cipherText, Candidates *candidates
 			}
 			cipher->k->freeKey(&baseKey);
 			cipher->k->freeKey(&mutatedKey);
-		} while (!maxima);
+		} while (!maxima && !*exit);
 		cipher->k->freeKey(&climberKey);
 	}
 	return 0;
@@ -138,14 +139,14 @@ int caesar_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 	return vigenere_decipher(cipherText, plainText, key);
 }
 
-int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
+int caesar_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit)
 {
-	return dictionaryAttack(&ciphers[CipherCaesar], cipherText, candidates, langM, dictionary);
+	return dictionaryAttack(&ciphers[CipherCaesar], cipherText, candidates, langM, dictionary, exit);
 }
 
-int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int caesar_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
-	return bruteForce(&ciphers[CipherCaesar], cipherText, candidates, langM);
+	return bruteForce(&ciphers[CipherCaesar], cipherText, candidates, langM, exit);
 }
 
 int vigenere_encipher(Alphabet *plainText, Alphabet *cipherText, Key *key)
@@ -182,19 +183,19 @@ int vigenere_decipher(Alphabet *cipherText, Alphabet *plainText, Key *key)
 	return 0;
 }
 
-int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary)
+int vigenere_dictionary(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, FILE *dictionary, sig_atomic_t *exit)
 {
-	return dictionaryAttack(&ciphers[CipherVigenere], cipherText, candidates, langM, dictionary);
+	return dictionaryAttack(&ciphers[CipherVigenere], cipherText, candidates, langM, dictionary, exit);
 }
 
-int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int vigenere_hillClimb(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
-	return hillClimb(&ciphers[CipherVigenere], cipherText, candidates, langM);
+	return hillClimb(&ciphers[CipherVigenere], cipherText, candidates, langM, exit);
 }
 
-int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM)
+int vigenere_bruteForce(Alphabet *cipherText, Candidates *candidates, LanguageModel *langM, sig_atomic_t *exit)
 {
-	return bruteForce(&ciphers[CipherVigenere], cipherText, candidates, langM);
+	return bruteForce(&ciphers[CipherVigenere], cipherText, candidates, langM, exit);
 }
 
 int scoreText(LanguageModel *langM, Alphabet* text)
