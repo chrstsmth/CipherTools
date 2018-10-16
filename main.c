@@ -110,16 +110,14 @@ int main(int argc, char *argv[])
 		}
 		case 't':
 		{
-			char *text = EARGF(die("-t requres an argument\n"));
-			opt.textLength = strlen(text);
-			int bufferSize = opt.textLength + 1;
-			if (!(opt.textIn = malloc(bufferSize * sizeof(&opt.textIn))))
+			char *filename = EARGF(die("-t requres an argument\n"));
+			FILE *f = fopen(filename, "r");
+			if (!f)
+				die("%s: %s\n", filename, strerror(errno));
+			if ((opt.textLength = text_init(&opt.textIn, f)) < 0)
+				die("%s: %s\n", filename, strerror(errno));
+			if (!(opt.textOut = malloc((opt.textLength + 1) * sizeof(&opt.textOut))))
 				die("malloc: %s\n", strerror(errno));
-			if (!(opt.textOut = malloc(bufferSize * sizeof(&opt.textOut))))
-				die("malloc: %s\n", strerror(errno));
-			if (stringToAlphabet(text, opt.textIn) > AlphabetSubsetLangM) {
-				die("text: %s\n", strerror(EINVAL));
-			}
 			break;
 		}
 		case 'k':
