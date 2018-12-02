@@ -1,11 +1,12 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "analyse.h"
 #include "alphabet.h"
 #include "language-model.h"
 
-void frequencyText(Alphabet *text, Frequency *freq)
+void frequencyText(Frequency *freq, Alphabet *text)
 {
 	Alphabet *a;
 	int n = alphabetStrlen(text); /* TODO send len, or store it with text */
@@ -17,7 +18,7 @@ void frequencyText(Alphabet *text, Frequency *freq)
 	freq->n = a - text;
 }
 
-void frequencyLangM(LanguageModel *langM, Frequency *freq)
+void frequencyLangM(Frequency *freq, LanguageModel *langM)
 {
 	freq->n = langM->head->freq;
 	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++) {
@@ -64,4 +65,26 @@ double indexOfCoincidence(Frequency *text)
 		ic += a * b;
 	}
 	return ic;
+}
+
+void analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM)
+{
+	memset(a, 0, sizeof(*a));
+	frequencyLangM(&a->lang, langM);
+	frequencyText(&a->text, text);
+	a->chiSquared = chiSquared(&a->text, &a->lang);
+	a->indexOfCoincidence = indexOfCoincidence(&a->lang);
+	a->measureOfRoughness = measureOfRoughness(&a->lang);
+}
+
+void analysis_print(Analysis *a, FILE *f)
+{
+	fprintf(f, "Total: %d %d\n", a->text.n, a->lang.n);
+	for (Alphabet i = 0; i < (int)AlphabetSubsetCipher; i++) {
+		int textFreq = a->text.freq[i];
+		double textPercent = textFreq / (double)a->text.n * 100;
+		int langFreq = a->lang.freq[i];
+		double langPercent = langFreq  / (double)a->lang.n * 100;
+		fprintf(f, "%c: %d %f %d %f\n", alphabetToChar(i), textFreq, textPercent, langFreq, langPercent);
+	}
 }

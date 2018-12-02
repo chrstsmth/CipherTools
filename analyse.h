@@ -1,6 +1,8 @@
 #ifndef ANALYZE_H
 #define ANALYZE_H
 
+#include <stdio.h>
+
 #include "alphabet.h"
 #include "language-model.h"
 
@@ -9,11 +11,25 @@ typedef struct Frequency {
 	int freq[AlphabetSubsetCipher];
 } Frequency;
 
-void frequencyLangM(LanguageModel *langM, Frequency *freq);
-void frequencyTextSkip(Alphabet *text, Frequency *freq, int skip, int offset);
-void frequencyText(Alphabet *text, Frequency *freq);
-double chiSquared(Frequency *text, Frequency *lang);
+typedef struct Distribution {
+	double dist[AlphabetSubsetCipher];
+} Distribution;
+
+typedef struct Analysis {
+	Frequency lang;
+	Frequency text;
+	double chiSquared;
+	double indexOfCoincidence;
+	double measureOfRoughness;
+} Analysis;
+
+void frequencyLangM(Frequency *freq, LanguageModel *langM);
+void frequencyText(Frequency *freq, Alphabet *text);
+double chiSquared(Frequency *lang, Frequency *text);
 double measureOfRoughness(Frequency *text);
 double indexOfCoincidence(Frequency *text);
+
+void analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM);
+void analysis_print(Analysis *a, FILE *f);
 
 #endif
