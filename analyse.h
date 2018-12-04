@@ -16,8 +16,8 @@ typedef struct Distribution {
 } Distribution;
 
 typedef struct Analysis {
-	Frequency lang;
-	Frequency text;
+	Distribution langDist;
+	Distribution textDist;
 	double chiSquared;
 	double indexOfCoincidence;
 	double measureOfRoughness;
@@ -25,9 +25,14 @@ typedef struct Analysis {
 
 void frequencyLangM(Frequency *freq, LanguageModel *langM);
 void frequencyText(Frequency *freq, Alphabet *text);
-double chiSquared(Frequency *lang, Frequency *text);
-double measureOfRoughness(Frequency *text);
-double indexOfCoincidence(Frequency *text);
+
+void distribution(Distribution *dist, Frequency *freq);
+void distributionLangM(Distribution *dist, LanguageModel *langM);
+void distributionText(Distribution *dist, Alphabet *text);
+
+double chiSquared(Distribution *lang, Distribution *text);
+double measureOfRoughness(Distribution *text);
+double indexOfCoincidence(Distribution *text);
 
 void analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM);
 void analysis_print(Analysis *a, FILE *f);

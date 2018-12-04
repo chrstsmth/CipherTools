@@ -13,39 +13,63 @@ void frequencyText(Frequency *freq, Alphabet *text)
 
 	memset(freq, 0, sizeof(*freq));
 	for (a = text; a - text < n; a++) {
-		freq->freq[*a]++;
+		if (isAlphabetSubsetCipher(*a))
+			freq->freq[*a]++;
 	}
-	freq->n = a - text;
+	for (int a = 0; a < AlphabetSubsetCipher; a++)
+		freq->n += freq->freq[a];
 }
 
 void frequencyLangM(Frequency *freq, LanguageModel *langM)
 {
-	freq->n = langM->head->freq;
+	memset(freq, 0, sizeof(*freq));
 	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++) {
 		Node *next = langM->head->next[a];
 		freq->freq[a] = 0;
-		if (next)
+		if (next) {
 			freq->freq[a] = next->freq;
+			freq->n += next->freq;
+		}
 	}
 }
 
-double chiSquared(Frequency *text, Frequency *lang)
+void distributionText(Distribution *dist, Alphabet *text)
+{
+	Frequency freq;
+	frequencyText(&freq, text);
+	distribution(dist, &freq);
+}
+
+void distributionLangM(Distribution *dist, LanguageModel *langM)
+{
+	Frequency freq;
+	frequencyLangM(&freq, langM);
+	distribution(dist, &freq);
+}
+
+void distribution(Distribution *dist, Frequency *freq)
+{
+	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++)
+		dist->dist[a] = freq->freq[a] / (double)freq->n;
+}
+
+double chiSquared(Distribution *text, Distribution *lang)
 {
 	double chiSquared = 0;
 	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++) {
-		double c = text->freq[a] / (double)text->n;
-		double e = lang->freq[a] / (double)lang->n;
+		double c = text->dist[a];
+		double e = lang->dist[a];
 		double ce =  c - e;
 		chiSquared += ce * ce / e;
 	}
 	return chiSquared;
 }
 
-double measureOfRoughness(Frequency *text)
+double measureOfRoughness(Distribution *text)
 {
 	double measureOfRoughness = 0;
 	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++) {
-		double prob = text->freq[a] / (double) text->n;
+		double prob = text->dist[a];
 		measureOfRoughness += prob * prob;
 	}
 	measureOfRoughness -= 2.0 / AlphabetSubsetCipher;
@@ -53,38 +77,32 @@ double measureOfRoughness(Frequency *text)
 	return measureOfRoughness;
 }
 
-double indexOfCoincidence(Frequency *text)
+/* indexOfCoincidence is the probability that two letters chosen at random
+* from the given cipher text are alike.  */
+double indexOfCoincidence(Distribution *text)
 {
-	/* Compute incrementally to avoid overflow for large frequencies */
 	double ic = 0;
-	double n = text->n;
-	for (Alphabet a = 0; a < (int)AlphabetSubsetCipher; a++) {
-		double freq = text->freq[a];
-		double a = freq / n;
-		double b = (freq - 1) / (n - 1);
-		ic += a * b;
-	}
+	for (int i = 0; i < AlphabetSubsetCipher; i++)
+		ic += text->dist[i] * text->dist[i];
 	return ic;
 }
 
 void analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM)
 {
 	memset(a, 0, sizeof(*a));
-	frequencyLangM(&a->lang, langM);
-	frequencyText(&a->text, text);
-	a->chiSquared = chiSquared(&a->text, &a->lang);
-	a->indexOfCoincidence = indexOfCoincidence(&a->lang);
-	a->measureOfRoughness = measureOfRoughness(&a->lang);
+	distributionLangM(&a->langDist, langM);
+	distributionText(&a->textDist, text);
+	a->chiSquared = chiSquared(&a->textDist, &a->langDist);
+	a->indexOfCoincidence = indexOfCoincidence(&a->langDist);
+	a->measureOfRoughness = measureOfRoughness(&a->langDist);
 }
 
 void analysis_print(Analysis *a, FILE *f)
 {
-	fprintf(f, "Total: %d %d\n", a->text.n, a->lang.n);
 	for (Alphabet i = 0; i < (int)AlphabetSubsetCipher; i++) {
-		int textFreq = a->text.freq[i];
-		double textPercent = textFreq / (double)a->text.n * 100;
-		int langFreq = a->lang.freq[i];
-		double langPercent = langFreq  / (double)a->lang.n * 100;
-		fprintf(f, "%c: %d %f %d %f\n", alphabetToChar(i), textFreq, textPercent, langFreq, langPercent);
+		fprintf(f, "%c: %f %f\n", alphabetToChar(i), a->textDist.dist[i], a->langDist.dist[i]);
 	}
+	fprintf(f, "chi: %f \n", a->chiSquared);
+	fprintf(f, "roughness: %f \n", a->measureOfRoughness);
+	fprintf(f, "IC: %f \n", a->indexOfCoincidence);
 }
