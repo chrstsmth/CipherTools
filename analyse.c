@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,18 +7,24 @@
 #include "alphabet.h"
 #include "language-model.h"
 
-void frequencyText(Frequency *freq, Alphabet *text)
+int coincidenceCount(Alphabet *text, int offset);
+
+void frequencyTextSequence(Frequency *freq, Alphabet *text, int n, int step, int offset)
 {
 	Alphabet *a;
-	int n = alphabetStrlen(text); /* TODO send len, or store it with text */
 
 	memset(freq, 0, sizeof(*freq));
-	for (a = text; a - text < n; a++) {
+	for (a = text + offset; a - text < n; a += step + 1) {
 		if (isAlphabetSubsetCipher(*a))
 			freq->freq[*a]++;
 	}
 	for (int a = 0; a < AlphabetSubsetCipher; a++)
 		freq->n += freq->freq[a];
+}
+
+void frequencyText(Frequency *freq, Alphabet *text, int n)
+{
+	frequencyTextSequence(freq, text, n, 0, 0);
 }
 
 void frequencyLangM(Frequency *freq, LanguageModel *langM)
@@ -33,10 +40,17 @@ void frequencyLangM(Frequency *freq, LanguageModel *langM)
 	}
 }
 
-void distributionText(Distribution *dist, Alphabet *text)
+void distributionTextSequence(Distribution *dist, Alphabet *text, int n, int step, int offset)
 {
 	Frequency freq;
-	frequencyText(&freq, text);
+	frequencyTextSequence(&freq, text, n, step, offset);
+	distribution(dist, &freq);
+}
+
+void distributionText(Distribution *dist, Alphabet *text, int n)
+{
+	Frequency freq;
+	frequencyText(&freq, text, n);
 	distribution(dist, &freq);
 }
 
@@ -77,8 +91,6 @@ double measureOfRoughness(Distribution *text)
 	return measureOfRoughness;
 }
 
-/* indexOfCoincidence is the probability that two letters chosen at random
-* from the given cipher text are alike.  */
 double indexOfCoincidence(Distribution *text)
 {
 	double ic = 0;
@@ -87,22 +99,142 @@ double indexOfCoincidence(Distribution *text)
 	return ic;
 }
 
-void analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM)
+int coincidenceCount(Alphabet *text, int offset)
+{
+	Alphabet *a = text; Alphabet *b = text + offset;
+	int streak = 0;
+	int score = 0;
+
+	for (; *a != AlphabetNull; a++, b++) {
+		if (*b == AlphabetNull)
+			b = text;
+		if (*a == *b) {
+			streak++;
+		} else {
+			if (streak > 1)
+				score += streak;
+			streak = 0;
+		}
+	}
+	return score;
+}
+
+void statistics(Statistics *stats, Distribution *langDist, Distribution *textDist)
+{
+	stats->chiSquared = chiSquared(textDist, langDist);
+	stats->indexOfCoincidence = indexOfCoincidence(textDist);
+	stats->measureOfRoughness = measureOfRoughness(textDist);
+}
+
+int sequenceInit(Sequence *sequence, Alphabet *text, int n, int step, Distribution *langDist)
+{
+	sequence->n = step + 1;
+	if (!(sequence->off = malloc(sequence->n * sizeof(*sequence->off))))
+		return errno;
+	memset(sequence->off, 0, sequence->n * sizeof(*sequence->off));
+
+	Statistics *avr = &sequence->avr;
+	for (int off = 0; off < sequence->n; off++) {
+		TextStatistics *stat = &sequence->off[off];
+		distributionTextSequence(&stat->dist, text, n, step, off);
+		stat->chiSquared = chiSquared(&stat->dist, langDist);
+		stat->indexOfCoincidence = indexOfCoincidence(&stat->dist);
+		stat->measureOfRoughness = measureOfRoughness(&stat->dist);
+
+		avr->chiSquared += stat->chiSquared;
+		avr->indexOfCoincidence += stat->indexOfCoincidence;
+		avr->measureOfRoughness += stat->measureOfRoughness;
+	}
+
+	avr->chiSquared /= sequence->n;
+	avr->indexOfCoincidence /= sequence->n;
+	avr->measureOfRoughness /= sequence->n;
+
+	return 0;
+}
+
+int sequencesInit(Sequences *sequences, Alphabet *text, int n, Distribution *langDist)
+{
+	sequences->n = sequenecMaxStep; //TODO or some multiple of text length
+	if (!(sequences->step = malloc(sequences->n * sizeof(*sequences->step))))
+		return errno;
+	memset(sequences->step, 0, sequences->n * sizeof(*sequences->step));
+
+	for (int step = 0; step < sequences->n; step++) {
+		if (sequenceInit(&sequences->step[step], text, n, step, langDist))
+			return errno;
+	}
+	return 0;
+}
+
+void textStatistics(TextStatistics *stat, Alphabet *text, int n)
+{
+		frequencyText(&stat->freq, text, n);
+		distribution(&stat->dist, &stat->freq);
+		stat->indexOfCoincidence = indexOfCoincidence(&stat->dist);
+		stat->measureOfRoughness = measureOfRoughness(&stat->dist);
+}
+
+void langStatistics(LangStatistics *stat, LanguageModel *langM)
+{
+		frequencyLangM(&stat->freq, langM);
+		distribution(&stat->dist, &stat->freq);
+		stat->indexOfCoincidence = indexOfCoincidence(&stat->dist);
+		stat->measureOfRoughness = measureOfRoughness(&stat->dist);
+}
+
+int analysis_init(Analysis *a, Alphabet *text, LanguageModel *langM)
 {
 	memset(a, 0, sizeof(*a));
-	distributionLangM(&a->langDist, langM);
-	distributionText(&a->textDist, text);
-	a->chiSquared = chiSquared(&a->textDist, &a->langDist);
-	a->indexOfCoincidence = indexOfCoincidence(&a->langDist);
-	a->measureOfRoughness = measureOfRoughness(&a->langDist);
+	a->length = alphabetStrlen(text);
+	langStatistics(&a->lang, langM);
+	textStatistics(&a->text, text, a->length);
+	sequencesInit(&a->seq, text, a->length, &a->lang.dist);
+	return 0;
+}
+
+void analysis_free()
+{
 }
 
 void analysis_print(Analysis *a, FILE *f)
 {
-	for (Alphabet i = 0; i < (int)AlphabetSubsetCipher; i++) {
-		fprintf(f, "%c: %f %f\n", alphabetToChar(i), a->textDist.dist[i], a->langDist.dist[i]);
+	fprintf(f, "Distribution\n");
+	for (int i = 0; i < AlphabetSubsetCipher; i++) {
+			fprintf(f, "%c: %f\n", alphabetToChar(i), a->lang.dist.dist[i]);
 	}
-	fprintf(f, "chi: %f \n", a->chiSquared);
-	fprintf(f, "roughness: %f \n", a->measureOfRoughness);
-	fprintf(f, "IC: %f \n", a->indexOfCoincidence);
+	fprintf(f, "\n");
+
+	fprintf(f, "Chi Squared\n");
+	for (int i = 0; i < a->seq.n; i++) {
+		Sequence *s = &a->seq.step[i];
+		fprintf(f, "%f: ", s->avr.chiSquared);
+		for (int j = 0; j < s->n; j++) {
+			fprintf(f, "%f, ", s->off[j].chiSquared);
+		}
+		fprintf(f, "\n");
+	}
+	fprintf(f, "\n");
+
+	fprintf(f, "Index of Coincidence\n");
+	for (int i = 0; i < a->seq.n; i++) {
+		Sequence *s = &a->seq.step[i];
+		fprintf(f, "%f: ", s->avr.indexOfCoincidence);
+		for (int j = 0; j < s->n; j++) {
+			fprintf(f, "%f, ", s->off[j].indexOfCoincidence);
+		}
+		fprintf(f, "\n");
+	}
+	fprintf(f, "\n");
+
+	fprintf(f, "Measure of Roughness\n");
+	for (int i = 0; i < a->seq.n; i++) {
+		Sequence *s = &a->seq.step[i];
+		fprintf(f, "%f: ", s->avr.measureOfRoughness);
+		for (int j = 0; j < s->n; j++) {
+			fprintf(f, "%f, ", s->off[j].measureOfRoughness);
+		}
+		fprintf(f, "\n");
+	}
+	fprintf(f, "\n");
 }

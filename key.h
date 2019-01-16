@@ -19,6 +19,7 @@ typedef struct KeyInterface {
 	int (*initKey)(Key *key, char *argv);
 	int (*initFirstKey)(Key *key);
 	int (*initRandomKey)(Key *key);
+	//int (*initSeedKey)(Key *key, int );
 	int (*nextMutationKey)(Key *key, int *m);
 	int (*nextKey)(Key *key);
 	int (*serializeKey)(Key *key, FILE *f);
